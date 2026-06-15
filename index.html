@@ -78,9 +78,31 @@ select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); back
   .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr;}
   .card.span-2{grid-column:span 1;}
 }
+
+#lockscreen{position:fixed; inset:0; z-index:9999; background:linear-gradient(135deg,var(--purple),var(--blue)); display:flex; align-items:center; justify-content:center; padding:20px;}
+#lockscreen .lock-card{background:#fff; border-radius:16px; padding:32px 28px; width:100%; max-width:340px; box-shadow:0 12px 40px rgba(0,0,0,.2); text-align:center;}
+#lockscreen .lock-card .logo{width:48px; height:48px; border-radius:12px; background:var(--purple); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; margin:0 auto 14px;}
+#lockscreen h2{font-size:17px; margin-bottom:6px; color:var(--text);}
+#lockscreen p{font-size:12px; color:var(--muted); margin-bottom:18px;}
+#lockscreen input{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); font-size:14px; margin-bottom:12px; text-align:center;}
+#lockscreen button{width:100%; padding:10px 12px; border-radius:8px; border:none; background:var(--purple); color:#fff; font-weight:700; font-size:14px; cursor:pointer;}
+#lockscreen button:hover{background:var(--purple-d);}
+#lockscreen .lock-error{color:#e05a5a; font-size:12px; margin-top:10px; min-height:14px;}
+body.locked > *:not(#lockscreen){display:none !important;}
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div id="lockscreen">
+  <div class="lock-card">
+    <div class="logo">AB</div>
+    <h2>AB Fashion — Business Dashboard</h2>
+    <p>Enter the access password to continue</p>
+    <input type="password" id="lockPassword" placeholder="Password" autocomplete="off">
+    <button id="lockSubmit">Unlock</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
 
 <header>
   <div class="brand">
@@ -774,5 +796,48 @@ Chart.defaults.color = '#6b6f8a';
 })();
 
 </script>
+
+<script>
+(function(){
+  const CORRECT_HASH = "6fc538e0747f58c8c89e3b800330ff2b946f6223d46c2aea148c342f8cab726e";
+
+  async function sha256(text){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function unlock(){
+    document.body.classList.remove('locked');
+    const ls = document.getElementById('lockscreen');
+    if(ls) ls.remove();
+  }
+
+  if (sessionStorage.getItem('abfashion_unlocked') === 'true') {
+    unlock();
+  } else {
+    const pwInput = document.getElementById('lockPassword');
+    const submitBtn = document.getElementById('lockSubmit');
+    const errorEl = document.getElementById('lockError');
+
+    async function tryUnlock(){
+      const val = pwInput.value;
+      const hash = await sha256(val);
+      if (hash === CORRECT_HASH) {
+        sessionStorage.setItem('abfashion_unlocked','true');
+        unlock();
+      } else {
+        errorEl.textContent = 'Incorrect password. Please try again.';
+        pwInput.value = '';
+        pwInput.focus();
+      }
+    }
+
+    submitBtn.addEventListener('click', tryUnlock);
+    pwInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryUnlock(); });
+    pwInput.focus();
+  }
+})();
+</script>
+
 </body>
 </html>
