@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AB Fashion — Business Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --purple:#7c5cf0; --purple-d:#6c4ed9;
+  --blue:#4f7df0; --blue-d:#3d63d8;
+  --teal:#1fc8c8; --teal-d:#15a8a8;
+  --green:#3ecf8e; --green-d:#2db97a;
+  --orange:#ff9f5a; --pink:#ff6f9f;
+  --bg:#f3f4fb; --card:#ffffff; --text:#2b2d42; --muted:#8a8fa3;
+  --border:#ecedf5;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); padding-bottom:40px;}
+header{background:linear-gradient(135deg,var(--purple),var(--blue)); color:#fff; padding:18px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 4px 16px rgba(76,68,224,.25);}
+header .brand{display:flex; align-items:center; gap:12px;}
+header .brand .logo{width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;}
+header .brand .titles h1{font-size:18px; font-weight:700;}
+header .brand .titles span{font-size:12px; opacity:.85;}
+nav.tabs{display:flex; gap:6px; flex-wrap:wrap;}
+nav.tabs button{background:rgba(255,255,255,.14); border:none; color:#fff; padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s;}
+nav.tabs button:hover{background:rgba(255,255,255,.26);}
+nav.tabs button.active{background:#fff; color:var(--purple-d);}
+main{max-width:1400px; margin:22px auto; padding:0 24px;}
+.tabpanel{display:none;}
+.tabpanel.active{display:block; animation:fade .25s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;}
+.kpi{border-radius:16px; padding:16px 18px; color:#fff; box-shadow:0 8px 20px rgba(0,0,0,.06); position:relative; overflow:hidden;}
+.kpi .label{font-size:12px; opacity:.9; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+.kpi .value{font-size:26px; font-weight:800; margin-top:6px;}
+.kpi .sub{font-size:11px; opacity:.85; margin-top:4px;}
+.k1{background:linear-gradient(135deg,var(--purple),var(--purple-d));}
+.k2{background:linear-gradient(135deg,#5b6ef0,var(--blue-d));}
+.k3{background:linear-gradient(135deg,var(--teal),var(--teal-d));}
+.k4{background:linear-gradient(135deg,var(--green),var(--green-d));}
+.k5{background:linear-gradient(135deg,#9b6cf0,#7c4ed9);}
+.k6{background:linear-gradient(135deg,#ff9f5a,#f97c2c);}
+.k7{background:linear-gradient(135deg,#ff6f9f,#ee4a82);}
+.k8{background:linear-gradient(135deg,#4f7df0,#2c4fd0);}
+
+.grid{display:grid; gap:18px;}
+.grid.cols-2{grid-template-columns:1fr 1fr;}
+.grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+.card{background:var(--card); border-radius:16px; padding:18px 20px; box-shadow:0 4px 16px rgba(40,40,90,.05); border:1px solid var(--border);}
+.card h3{font-size:14px; font-weight:700; margin-bottom:4px;}
+.card .card-sub{font-size:12px; color:var(--muted); margin-bottom:12px;}
+.card.span-2{grid-column:span 2;}
+.chart-wrap{position:relative; height:300px;}
+.chart-wrap.tall{height:360px;}
+.chart-wrap.short{height:230px;}
+
+table{width:100%; border-collapse:collapse; font-size:13px;}
+table th{text-align:left; padding:9px 10px; background:#f7f7fc; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.03em; position:sticky; top:0;}
+table td{padding:9px 10px; border-bottom:1px solid var(--border);}
+table tbody tr:hover{background:#fafaff;}
+.table-scroll{max-height:420px; overflow:auto; border-radius:10px; border:1px solid var(--border);}
+.pos{color:#1d9d6f; font-weight:600;}
+.neg{color:#e05a5a; font-weight:600;}
+.pill{display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+.pill.retail{background:#eee7ff; color:#7c5cf0;}
+.pill.wholesale{background:#e3f0ff; color:#3d63d8;}
+
+select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:#fafaff; font-size:13px; color:var(--text); margin-top:4px; margin-right:4px;}
+
+.section-title{font-size:16px; font-weight:800; margin:28px 0 14px; display:flex; align-items:center; gap:8px;}
+.section-title .dot{width:10px; height:10px; border-radius:50%; background:var(--purple);}
+
+@media(max-width:1100px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr;}
+  .card.span-2{grid-column:span 1;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">AB</div>
+    <div class="titles">
+      <h1>AB FASHION — Business Dashboard</h1>
+      <span>Karachi · Jewellery, Bangles, Fancy &amp; Hair Trading · All figures in PKR</span>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="active" data-tab="overview">Overview</button>
+    <button data-tab="sales">Sales &amp; Departments</button>
+    <button data-tab="financials">Financials</button>
+    <button data-tab="ops">Operations &amp; Assets</button>
+    <button data-tab="range">Custom Date Range</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ===================== OVERVIEW ===================== -->
+<section id="overview" class="tabpanel active">
+  <div class="kpi-grid">
+    <div class="kpi k1"><div class="label">Total Sales 2025</div><div class="value" id="kpi-sales-2025"></div><div class="sub">All departments</div></div>
+    <div class="kpi k2"><div class="label">Total Sales 2026 (YTD)</div><div class="value" id="kpi-sales-2026"></div><div class="sub" id="kpi-sales-2026-sub"></div></div>
+    <div class="kpi k3"><div class="label">Gross Profit 2025</div><div class="value" id="kpi-gp-2025"></div><div class="sub" id="kpi-gp-margin"></div></div>
+    <div class="kpi k4"><div class="label">Net Profit 2025</div><div class="value" id="kpi-np-2025"></div><div class="sub" id="kpi-np-margin"></div></div>
+    <div class="kpi k5"><div class="label">Total Purchases 2025</div><div class="value" id="kpi-purch-2025"></div><div class="sub">Inventory &amp; container purchasing</div></div>
+    <div class="kpi k6"><div class="label">Total Expenses 2025</div><div class="value" id="kpi-exp-2025"></div><div class="sub">Department + head office overhead</div></div>
+    <div class="kpi k7"><div class="label">Rental Income 2026</div><div class="value" id="kpi-rental"></div><div class="sub">Annualised, 5 properties</div></div>
+    <div class="kpi k8"><div class="label">Asset Valuation 2026</div><div class="value" id="kpi-assets"></div><div class="sub" id="kpi-assets-gain"></div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Sales by Department — 2025</h3>
+      <div class="card-sub">Share of PKR 2.0 billion total sales</div>
+      <div class="chart-wrap tall"><canvas id="chartDeptDonut"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Monthly Sales — 2025 vs 2026</h3>
+      <div class="card-sub">Company-wide, all departments combined</div>
+      <div class="chart-wrap tall"><canvas id="chartMonthlySales"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:18px;">
+    <div class="card">
+      <h3>Yearly Sales Trend &amp; Projection</h3>
+      <div class="card-sub">2016 – 2026 actuals, 2027-2028 projected at recent growth rate</div>
+      <div class="chart-wrap tall"><canvas id="chartYearlyTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Retail vs Wholesale — 2025</h3>
+      <div class="card-sub">Sales, gross profit &amp; net profit by channel</div>
+      <div class="chart-wrap tall"><canvas id="chartChannel"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SALES & DEPARTMENTS ===================== -->
+<section id="sales" class="tabpanel">
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Sales by Department — 2025 vs 2026 YTD</h3>
+      <div class="chart-wrap tall"><canvas id="chartDeptYearCompare"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Gross vs Net Profit by Department — 2025</h3>
+      <div class="chart-wrap tall"><canvas id="chartDeptProfit"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px;">
+    <h3>Monthly Sales, Purchases &amp; Net Profit — 2025 (Company-wide)</h3>
+    <div class="chart-wrap tall"><canvas id="chartMonthlyCombo"></canvas></div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Department Performance — 2025</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="deptTable">
+        <thead><tr><th>Department</th><th>Channel</th><th>Sales</th><th>Purchases</th><th>Gross Profit</th><th>Net Profit</th><th>Net Margin</th><th>Operating Expense</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINANCIALS ===================== -->
+<section id="financials" class="tabpanel">
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi k1"><div class="label">Total Revenue 2025</div><div class="value" id="fin-revenue"></div><div class="sub">Sales + rental + home sales</div></div>
+    <div class="kpi k6"><div class="label">Head Office Expenses 2025</div><div class="value" id="fin-expenses"></div><div class="sub">Salaries, bonuses, rent, utilities…</div></div>
+    <div class="kpi k3"><div class="label">Total Gross Profit 2025</div><div class="value" id="fin-gp"></div></div>
+    <div class="kpi k4"><div class="label">Total Net Profit 2025</div><div class="value" id="fin-np"></div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Head Office Expense Breakdown — 2025</h3>
+      <div class="card-sub">Total PKR 122.9 million</div>
+      <div class="chart-wrap tall"><canvas id="chartExpensePie"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Overhead Expense Trend — Monthly</h3>
+      <div class="card-sub">2024, 2025 &amp; 2026 (YTD)</div>
+      <div class="chart-wrap tall"><canvas id="chartOverheadTrend"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:18px;">
+    <div class="card">
+      <h3>Balance Sheet — 2026</h3>
+      <div class="card-sub">Current assets vs current liabilities</div>
+      <div class="chart-wrap tall"><canvas id="chartBalanceSheet"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Miscellaneous Expenses — 2026</h3>
+      <div class="card-sub">Month-by-month, ad-hoc operational spend</div>
+      <div class="chart-wrap tall"><canvas id="chartMiscExpense"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Big One-Off Purchases — 2026</div>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="table-scroll">
+        <table id="bigPurchaseTable">
+          <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Current Assets — 2026</h3>
+      <div class="chart-wrap"><canvas id="chartAssetsBreakdown"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== OPERATIONS & ASSETS ===================== -->
+<section id="ops" class="tabpanel">
+  <div class="kpi-grid">
+    <div class="kpi k1"><div class="label">Containers Imported</div><div class="value" id="op-container-count"></div><div class="sub">China &amp; Dubai shipments</div></div>
+    <div class="kpi k2"><div class="label">Container Purchase Cost</div><div class="value" id="op-container-purchase"></div></div>
+    <div class="kpi k5"><div class="label">Container Net Profit</div><div class="value" id="op-container-net"></div></div>
+    <div class="kpi k7"><div class="label">Total Property Valuation</div><div class="value" id="op-asset-value"></div><div class="sub" id="op-asset-gain"></div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Container Net Profit by Shipment</h3>
+      <div class="chart-wrap tall"><canvas id="chartContainers"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Employee Sales Commission — Cumulative</h3>
+      <div class="card-sub">Commission earned vs sales generated</div>
+      <div class="chart-wrap tall"><canvas id="chartCommission"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Container Shipments</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="containerTable">
+        <thead><tr><th>#</th><th>Container</th><th>Date</th><th>Purchase Price</th><th>Total Expense</th><th>Revenue (Carry)</th><th>Net Profit</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Company Assets &amp; Rental Income</div>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-sub">Properties &amp; investments — purchase cost vs 2026 valuation</div>
+      <div class="table-scroll">
+        <table id="assetsTable">
+          <thead><tr><th>#</th><th>Asset</th><th>Use</th><th>Location</th><th>Purchase Cost</th><th>Valuation 2026</th><th>Capital Gain</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Rental Income — 2026</h3>
+      <div class="card-sub">Total annualised: <span id="rental-total"></span></div>
+      <div class="table-scroll">
+        <table id="rentalTable">
+          <thead><tr><th>Property</th><th>Monthly</th><th>Yearly</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== CUSTOM DATE RANGE ===================== -->
+<section id="range" class="tabpanel">
+  <div class="card" style="margin-bottom:18px;">
+    <h3>Select a Date Range</h3>
+    <div class="card-sub">Monthly data is available from Jan 2024 through Apr 2026. Choose a range to recompute the figures and charts below.</div>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+      <div>
+        <label style="font-size:12px; color:var(--muted); font-weight:600;">From</label><br>
+        <select id="rangeFromMonth"></select>
+        <select id="rangeFromYear"></select>
+      </div>
+      <div>
+        <label style="font-size:12px; color:var(--muted); font-weight:600;">To</label><br>
+        <select id="rangeToMonth"></select>
+        <select id="rangeToYear"></select>
+      </div>
+      <div style="margin-top:18px;">
+        <span class="pill retail" id="rangeLabel" style="font-size:12px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi k1"><div class="label">Total Sales</div><div class="value" id="rng-sales"></div><div class="sub">Selected range</div></div>
+    <div class="kpi k5"><div class="label">Total Purchases</div><div class="value" id="rng-purchase"></div></div>
+    <div class="kpi k3"><div class="label">Gross Profit</div><div class="value" id="rng-gp"></div><div class="sub" id="rng-gp-margin"></div></div>
+    <div class="kpi k4"><div class="label">Net Profit</div><div class="value" id="rng-np"></div><div class="sub" id="rng-np-margin"></div></div>
+    <div class="kpi k6"><div class="label">Head Office Overhead</div><div class="value" id="rng-overhead"></div></div>
+    <div class="kpi k7"><div class="label">Containers Landed</div><div class="value" id="rng-containers"></div></div>
+    <div class="kpi k8"><div class="label">Container Net Profit</div><div class="value" id="rng-container-net"></div></div>
+    <div class="kpi k2"><div class="label">Avg. Monthly Sales</div><div class="value" id="rng-avg-sales"></div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Sales by Department</h3>
+      <div class="card-sub">Share of sales within the selected range</div>
+      <div class="chart-wrap tall"><canvas id="chartRangeDonut"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Monthly Sales, Purchases &amp; Net Profit</h3>
+      <div class="card-sub">Company-wide, month by month across the selected range</div>
+      <div class="chart-wrap tall"><canvas id="chartRangeTrend"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Containers Landed in Range</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="rangeContainerTable">
+        <thead><tr><th>#</th><th>Container</th><th>Date</th><th>Purchase Price</th><th>Total Expense</th><th>Revenue (Carry)</th><th>Net Profit</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const DATA = {"departments":{"Wholesale Material":{"years_sales":{"2024":{"monthly":[116450.0,1082345.0,1900604.0,1018586.0,917655.0,1199007.0,297276.0,2814716.0,2389677.0,1723550.0,1152053.0,2484950.0],"total":17096869.0},"2025":{"monthly":[2242560.0,1394216.0,4446866.0,2168632.0,2205616.0,1760009.0,2738192.0,3007900.0,1162558.0,1291418.0,848485.0,592705.0],"total":23859157.0},"2026":{"monthly":[3854324.0,1557570.0,1194745.0,4373632.0,0,0,0,0,0,0,0,0],"total":10980271.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2028":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2029":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2030":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2031":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2032":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2033":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2034":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2035":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":17096869.0,"purchase_total":37447264.0,"gross_profit_total":3419373.8,"net_profit_total":1901822.8000000003,"sale_monthly":[116450.0,1082345.0,1900604.0,1018586.0,917655.0,1199007.0,297276.0,2814716.0,2389677.0,1723550.0,1152053.0,2484950.0],"purchase_monthly":[2092680.0,857840.0,3059985.0,6982608.0,2689120.0,556200.0,5770295.0,100494.0,121315.0,5480076.0,9736651.0,0.0],"gp_monthly":[23290.0,216469.0,380120.80000000005,203717.2,183531.0,239801.40000000002,59455.200000000004,562943.2000000001,477935.4,344710.0,230410.6,496990.0],"np_monthly":[-84124.0,92331.0,173204.80000000005,84335.20000000001,64431.0,116308.40000000002,-85125.79999999999,412520.20000000007,358913.4,242913.0,123824.6,402291.0]},"2025":{"sale_total":23859157.0,"purchase_total":16612063.0,"gross_profit_total":4771831.399999999,"net_profit_total":3228909.4000000004,"sale_monthly":[2242560.0,1394216.0,4446866.0,2168632.0,2205616.0,1760009.0,2738192.0,3007900.0,1162558.0,1291418.0,848485.0,592705.0],"purchase_monthly":[189000.0,1213473.0,869287.0,0.0,225101.0,1728391.0,2342930.0,2362238.0,776573.0,4508535.0,1593040.0,803495.0],"gp_monthly":[448512.0,278843.2,889373.2000000001,433726.4,441123.2,352001.80000000005,547638.4,601580.0,232511.6,258283.6,169697.0,118541.0],"np_monthly":[329012.0,149043.2,666173.2000000001,273526.4,317023.2,231101.80000000005,418638.4,475980.0,109911.6,129283.6,81475.0,47741.0]}},"expense":{"2024":1517551.0,"2025":1542922.0},"expense_monthly":{"2024":[107414.0,124138.0,206916.0,119382.0,119100.0,123493.0,144581.0,150423.0,119022.0,101797.0,106586.0,94699.0],"2025":[119500.0,129800.0,223200.0,160200.0,124100.0,120900.0,129000.0,125600.0,122600.0,129000.0,88222.0,70800.0]}},"Retail Hair":{"years_sales":{"2024":{"monthly":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,500348.0,7375321.0,7851514.0,7151636.0,9085855.0],"total":31964674.0},"2025":{"monthly":[7771738.0,11782951.0,16843441.0,5819177.0,8057139.0,3831361.0,5988384.0,7634812.0,9005276.0,9371943.0,9216073.0,9792649.0],"total":105114944.0},"2026":{"monthly":[7680630.0,13123398.0,9832231.0,6143020.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"total":36779279.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2028":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2029":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2030":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2031":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2032":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2033":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2034":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2035":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2025":{"sale_total":105114944.0,"purchase_total":95046114.0,"gross_profit_total":21022988.800000004,"net_profit_total":9349748.924285715,"sale_monthly":[7771738.0,11782951.0,16843441.0,5819177.0,8057139.0,3831361.0,5988384.0,7634812.0,9005276.0,9371943.0,9216073.0,9792649.0],"purchase_monthly":[8397782.0,10603010.0,10585125.0,7565132.0,4849491.0,5446235.0,1685337.0,15305754.0,7118836.0,6975808.0,8256802.0,8256802.0],"gp_monthly":[1554347.6,2356590.2,3368688.2,1163835.4000000001,1611427.8,766272.2000000001,1197676.8,1526962.4000000001,1801055.2000000002,1874388.6,1843214.6,1958529.8],"np_monthly":[719616.7242857143,1775180.9142857145,2358233.9142857147,488657.11428571446,782321.5142857144,199090.9142857144,389304.51428571437,692676.1142857145,991443.9142857145,981992.0285714286,1027774.0285714286,-1056542.7714285713]},"2026":{"sale_total":36779279.0,"purchase_total":19199628.0,"gross_profit_total":7355855.800000001,"net_profit_total":7355855.800000001,"sale_monthly":[7680630.0,13123398.0,9832231.0,6143020.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"purchase_monthly":[775978.0,5291811.0,12310662.0,821177.0,0,0,0.0,0.0,0.0,0.0,0.0,0.0],"gp_monthly":[1536126.0,2624679.6,1966446.2000000002,1228604.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"np_monthly":[1536126.0,2624679.6,1966446.2000000002,1228604.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}},"expense":{"2025":11673239.875714283},"expense_monthly":{"2025":[834730.8757142858,581409.2857142857,1010454.2857142857,675178.2857142857,829106.2857142857,567181.2857142857,808372.2857142857,834286.2857142857,809611.2857142857,892396.5714285715,815440.5714285715,3015072.5714285714]}},"Retail Fancy":{"years_sales":{"2021":{"monthly":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6041741.0,14302093.0,13791210.0,14326445.0],"total":48461489.0},"2022":{"monthly":[12693586.0,13855032.0,12711478.0,29224898.0,9071192.0,11533823.0,9719471.0,5579152.0,9748682.0,14112830.0,13098531.0,13676582.0],"total":155025257.0},"2023":{"monthly":[14107552.0,19771616.0,23420261.0,34156760.0,26587260.0,21784051.0,9798738.0,30433162.0,42896978.0,27788751.0,31003667.0,31783658.0],"total":313532454.0},"2024":{"monthly":[25431129.0,28400300.0,44874591.0,27995007.0,17800328.0,20250479.0,17565918.0,21511664.0,30659067.0,28512784.0,29812097.0,36793193.0],"total":329606557.0},"2025":{"monthly":[37962468.0,42417948.0,50173402.0,24318120.0,28938027.0,23016361.0,31773665.0,25268589.0,41211884.0,41483463.0,42375878.0,44605227.0],"total":433545032.0},"2026":{"monthly":[49596477.0,65951071.0,56407284.0,41942854.0,0,0,0,0,0,0,0,0],"total":213897686.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2028":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2029":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2030":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2031":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2032":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":329606557.0,"purchase_total":291004719.0,"gross_profit_total":65921311.39999999,"net_profit_total":52456885.24983334,"sale_monthly":[25431129.0,28400300.0,44874591.0,27995007.0,17800328.0,20250479.0,17565918.0,21511664.0,30659067.0,28512784.0,29812097.0,36793193.0],"purchase_monthly":[6831905.0,13945986.0,21182947.0,49899807.0,9121473.0,54219765.0,1114010.0,11035717.0,13375471.0,19444634.0,55180120.0,35652884.0],"gp_monthly":[5086225.800000001,5680060.0,8974918.200000001,5599001.4,3560065.6,4050095.8000000003,3513183.6,4302332.8,6131813.4,5702556.800000001,5962419.4,7358638.600000001],"np_monthly":[3969562.471000001,4729585.3,7489175.142333334,4405331.559666667,2380911.1053333334,2954996.8210000005,2482853.0153333335,3365736.502666666,5191924.832833334,4435607.224000001,4983054.754500001,6068146.521166667]},"2025":{"sale_total":433545032.0,"purchase_total":339339158.0,"gross_profit_total":86709006.39999999,"net_profit_total":71973661.82628572,"sale_monthly":[37962468.0,42417948.0,50173402.0,24318120.0,28938027.0,23016361.0,31773665.0,25268589.0,41211884.0,41483463.0,42375878.0,44605227.0],"purchase_monthly":[29677422.0,66600365.0,26860938.0,17407662.0,32959953.0,52416746.0,2897720.0,13941408.0,17178068.0,1078680.0,32040272.0,46279924.0],"gp_monthly":[7592493.600000001,8483589.6,10034680.4,4863624.0,5787605.4,4603272.2,6354733.0,5053717.800000001,8242376.800000001,8296692.600000001,8475175.6,8921045.4],"np_monthly":[6435519.022285715,7592553.392285714,8669366.011285715,3969767.7842857144,4759787.498785715,3837066.3727857145,5312800.216785714,4060428.630785715,7182131.863285715,7057070.834071429,7433521.211571428,5663648.988071429]}},"expense":{"2024":13464426.150166668,"2025":14735344.573714286},"expense_monthly":{"2024":[1116663.3290000001,950474.7000000001,1485743.0576666666,1193669.8403333332,1179154.4946666667,1095098.979,1030330.5846666667,936596.2973333334,939888.5671666667,1266949.576,979364.6455,1290492.0788333332],"2025":[1156974.5777142858,891036.2077142857,1365314.3887142858,893856.2157142856,1027817.9012142858,766205.8272142857,1041932.7832142857,993289.1692142857,1060244.9367142858,1239621.7659285713,1041654.3884285715,3257396.4119285713]}},"Retail Jewelry":{"years_sales":{"2016":{"monthly":[4991960.0,4258102.0,5432971.0,6262081.0,5591962.0,11220199.0,8190607.0,5885051.0,6222300.0,3153240.0,4375310.0,6090885.0],"total":71674668.0},"2017":{"monthly":[4708466.0,5518643.0,7089514.0,6186960.0,9752004.0,17607862.0,10526700.0,12158802.0,4465489.0,7404556.0,8385398.0,9155158.0],"total":102959552.0},"2018":{"monthly":[9340014.0,9399048.0,10347025.0,7791780.0,12408584.0,17246346.0,9775119.0,10971646.0,3812526.0,4998014.0,6679099.0,9342561.0],"total":112111762.0},"2019":{"monthly":[6643113.0,5109455.0,7141035.0,7834005.0,20015789.0,7312183.0,7252546.0,9969143.0,2562595.0,6337801.0,8314319.0,7709475.0],"total":96201459.0},"2020":{"monthly":[5122886.0,6530433.0,4149993.0,1259563.0,11664515.0,5967978.0,13069115.0,6405880.0,7113564.0,11128916.0,1006983.0,12550882.0],"total":85970708.0},"2021":{"monthly":[8995804.0,11770025.0,9602506.0,20759054.0,12977097.0,9304932.0,12774733.0,7583366.0,8774256.0,10490747.0,10265180.0,14699253.0],"total":137996953.0},"2022":{"monthly":[10112476.0,11466367.0,18061752.0,32938995.0,8474243.0,9150541.0,12831754.0,6086384.0,7467468.0,11115078.0,10389496.0,9572877.0],"total":147667431.0},"2023":{"monthly":[10073618.0,12339577.0,24727513.0,31760243.0,11382564.0,13027675.0,7152786.0,10726049.0,13791528.0,18353027.0,15173994.0,20193858.0],"total":188702432.0},"2024":{"monthly":[22750055.0,19472163.0,43074120.0,28335076.0,11217994.0,11373264.0,7926384.0,12953691.0,17724508.0,17607836.0,17032408.0,20640040.0],"total":230107539.0},"2025":{"monthly":[20809992.0,27029577.0,45596635.0,10642020.0,14012977.0,9775895.0,13217730.0,12608548.0,15619592.0,15431200.0,14731094.0,15158737.0],"total":214633997.0},"2026":{"monthly":[18869211.0,34880770.0,29668717.0,14698913.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"total":98117611.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":230107539.0,"purchase_total":197962992.0,"gross_profit_total":46021507.800000004,"net_profit_total":31426033.46333334,"sale_monthly":[22750055.0,19472163.0,43074120.0,28335076.0,11217994.0,11373264.0,7926384.0,12953691.0,17724508.0,17607836.0,17032408.0,20640040.0],"purchase_monthly":[16677736.0,10654426.0,18002250.0,46471988.0,14380740.0,18700613.0,4526672.0,8427278.0,18836919.0,21150512.0,20133858.0,0.0],"gp_monthly":[4550011.0,3894432.6,8614824.0,5667015.2,2243598.8000000003,2274652.8000000003,1585276.8,2590738.2,3544901.6,3521567.2,3406481.6,4128008.0],"np_monthly":[3309978.25,2839136.5700000003,6945764.333333334,4313749.606666667,1009764.6933333336,1137571.6600000004,524248.29333333345,1569412.6566666667,2528054.2733333334,2165408.4400000004,2343311.0200000005,2739633.666666667]},"2025":{"sale_total":214633997.0,"purchase_total":171608547.0,"gross_profit_total":42926799.4,"net_profit_total":26826943.554285716,"sale_monthly":[20809992.0,27029577.0,45596635.0,10642020.0,14012977.0,9775895.0,13217730.0,12608548.0,15619592.0,15431200.0,14731094.0,15158737.0],"purchase_monthly":[15086848.0,21241978.0,19797586.0,19688407.0,7010131.0,22719671.0,8960040.0,5678043.0,15483161.0,10791391.0,10737328.0,14413963.0],"gp_monthly":[4161998.4000000004,5405915.4,9119327.0,2128404.0,2802595.4000000004,1955179.0,2643546.0,2521709.6,3123918.4000000004,3086240.0,2946218.8000000003,3031747.4000000004],"np_monthly":[2853867.6042857147,4308210.344285714,7373306.364285714,1164605.5142857144,1678059.3442857147,1125738.7642857144,1515296.4142857143,1452637.8342857144,2025011.1942857148,1966531.4285714286,1594589.288571429,-230910.5414285711]}},"expense":{"2024":14595474.336666666,"2025":16099855.845714286},"expense_monthly":{"2024":[1240032.7500000002,1055296.03,1669059.6666666665,1353265.5933333333,1233834.1066666667,1137081.14,1061028.5066666666,1021325.5433333335,1016847.3266666667,1356158.7599999998,1063170.5799999998,1388374.3333333333],"2025":[1308130.7957142857,1097705.0557142857,1746020.6357142858,963798.4857142856,1124536.0557142857,829440.2357142856,1128249.5857142857,1069071.7657142857,1098907.2057142856,1119708.5714285714,1351629.5114285713,3262657.9414285715]}},"Wholesale Bangles":{"years_sales":{"2016":{"monthly":[11413068.0,6893846.0,13105666.0,17081139.0,12433694.0,21580267.0,15467339.0,14761521.0,15593057.0,13200557.0,12426073.0,23852923.0],"total":177809150.0},"2017":{"monthly":[15136887.0,15039284.0,23949554.0,9082835.0,7483621.0,4606523.0,2302954.0,14934786.0,7144148.0,14675724.0,15140537.0,16936999.0],"total":146433852.0},"2018":{"monthly":[19688499.0,16834187.0,18561576.0,14297296.0,30649942.0,19178877.0,11574179.0,18613313.0,13410249.0,15344085.0,19013811.0,24926283.0],"total":222092297.0},"2019":{"monthly":[18618019.0,13978521.0,13086856.0,15568955.0,24563335.0,7157171.0,11967536.0,12581964.0,5109258.0,14112307.0,10960209.0,7357663.0],"total":155061794.0},"2020":{"monthly":[4521502.0,6889270.0,5754832.0,349580.0,3264880.0,6589814.0,7777574.0,1529190.0,10598944.0,17476675.0,15101285.0,11400409.0],"total":91253955.0},"2021":{"monthly":[9225549.0,9025319.0,13364211.0,15410262.0,10756926.0,12843328.0,9223204.0,6095088.0,9672178.0,16048954.0,17301878.0,11560187.0],"total":140527084.0},"2022":{"monthly":[12320996.0,15683702.0,23541291.0,18794929.0,10568574.0,13031277.0,6125600.0,6553638.0,9554370.0,9905370.0,11809729.0,7642303.0],"total":145531779.0},"2023":{"monthly":[6841100.0,9685764.0,19010725.0,14166885.0,12202184.0,10993268.0,3899538.0,10540215.0,7191094.0,7099009.0,13679846.0,10940704.0],"total":126250332.0},"2024":{"monthly":[13546658.0,15178188.0,22218562.0,10402903.0,13877308.0,7116044.0,4954805.0,9586576.0,17757497.0,14978522.0,15257850.0,16970822.0],"total":161845735.0},"2025":{"monthly":[17043466.0,16870564.0,24761596.0,12698736.0,11864566.0,3428330.0,9640410.0,13283897.0,12086533.0,19542125.0,14446631.0,11615972.0],"total":167282826.0},"2026":{"monthly":[19662465.0,36572427.0,30709498.0,19175292.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"total":106119682.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":161845735.0,"purchase_total":133372792.0,"gross_profit_total":32369147.0,"net_profit_total":22147007.0,"sale_monthly":[13546658.0,15178188.0,22218562.0,10402903.0,13877308.0,7116044.0,4954805.0,9586576.0,17757497.0,14978522.0,15257850.0,16970822.0],"purchase_monthly":[19206218.0,8887175.0,1827700.0,271280.0,10388436.0,758020.0,25176337.0,1388610.0,24952329.0,2087514.0,38429173.0,0.0],"gp_monthly":[2709331.6,3035637.6,4443712.4,2080580.6,2775461.6,1423208.8,990961.0,1917315.2000000002,3551499.4000000004,2995704.4000000004,3051570.0,3394164.4000000004],"np_monthly":[1873682.7333333334,2337146.533333333,3512977.266666667,1186539.1,1857090.7666666668,544343.6333333334,162579.66666666663,1137809.9000000001,2855349.4333333336,1967974.0000000005,2327273.5,2384240.466666667]},"2025":{"sale_total":167282826.0,"purchase_total":103106269.0,"gross_profit_total":33456565.2,"net_profit_total":21971094.324285716,"sale_monthly":[17043466.0,16870564.0,24761596.0,12698736.0,11864566.0,3428330.0,9640410.0,13283897.0,12086533.0,19542125.0,14446631.0,11615972.0],"purchase_monthly":[1821410.0,27649033.0,14129978.0,21763365.0,100330.0,76760.0,320010.0,22922490.0,144516.0,13835347.0,287780.0,55250.0],"gp_monthly":[3408693.2,3374112.8000000003,4952319.2,2539747.2,2372913.2,685666.0,1928082.0,2656779.4000000004,2417306.6,3908425.0,2889326.2,2323194.4],"np_monthly":[2557962.3242857144,2791203.5142857144,3971064.9142857147,1874968.9142857145,1549406.9142857145,98984.71428571432,1093809.7142857143,1883193.1142857147,1642595.3142857144,3073528.4285714286,2104016.628571429,-669640.1714285715]}},"expense":{"2025":11485470.875714283},"expense_monthly":{"2025":[850730.8757142858,582909.2857142857,981254.2857142857,664778.2857142857,823506.2857142857,586681.2857142857,834272.2857142857,773586.2857142857,774711.2857142857,834896.5714285715,785309.5714285715,2992834.5714285714]}},"Wholesale Fancy":{"years_sales":{"2024":{"monthly":[0.0,0.0,0.0,0.0,0.0,0.0,5192516.0,17719020.0,24079940.0,24599828.0,21172869.0,28654236.0],"total":121418409.0},"2025":{"monthly":[25282718.0,18531072.0,11245148.0,16796626.0,12036810.0,5107460.0,17484890.0,22180086.0,30329615.0,31889538.0,40081975.0,36887834.0],"total":267853772.0},"2026":{"monthly":[37916957.0,16735462.0,12354258.0,24187364.0,0,0,0,0,0,0,0,0],"total":91194041.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2028":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2029":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2030":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2031":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2032":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2033":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2034":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2035":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":121418409.0,"purchase_total":257937025.0,"gross_profit_total":18212761.349999998,"net_profit_total":8656064.683333334,"sale_monthly":[0.0,0.0,0.0,0.0,0.0,0.0,5192516.0,17719020.0,24079940.0,24599828.0,21172869.0,28654236.0],"purchase_monthly":[0.0,0.0,0.0,0.0,0.0,0.0,39037597.0,6660079.0,38882790.0,11353483.0,36210609.0,125792467.0],"gp_monthly":[0.0,0.0,0.0,0.0,0.0,0.0,778877.4,2657853.0,3611991.0,3689974.1999999997,3175930.35,4298135.399999999],"np_monthly":[-841332.2000000001,-676074.4,-910818.4666666666,-875514.8333333333,-882354.1666666666,-834648.5,11712.733333333279,2006964.3666666667,3014091.033333333,2736593.8,2537483.85,3369961.466666666]},"2025":{"sale_total":267853772.0,"purchase_total":240571079.0,"gross_profit_total":40178065.800000004,"net_profit_total":29139131.924285714,"sale_monthly":[25282718.0,18531072.0,11245148.0,16796626.0,12036810.0,5107460.0,17484890.0,22180086.0,30329615.0,31889538.0,40081975.0,36887834.0],"purchase_monthly":[6458108.0,26463652.0,56820832.0,7691148.0,114410.0,330400.0,0.0,36628786.0,24361547.0,61078491.0,10692352.0,9931353.0],"gp_monthly":[3792407.6999999997,2779660.8,1686772.2,2519493.9,1805521.5,766119.0,2622733.5,3327012.9,4549442.25,4783430.7,6012296.25,5533175.1],"np_monthly":[3029976.824285714,2251051.5142857144,856317.9142857143,1939615.6142857142,1039225.2142857143,228037.71428571432,1815061.2142857143,2565926.614285714,3770430.9642857146,3914034.128571429,5238790.678571428,2490663.5285714283]}},"expense":{"2024":9556696.666666668,"2025":11038933.875714285},"expense_monthly":{"2024":[841332.2000000001,676074.4,910818.4666666666,875514.8333333333,882354.1666666666,834648.5,767164.6666666667,650888.6333333334,597899.9666666667,953380.4,638446.5,928173.9333333333],"2025":[762430.8757142858,528609.2857142857,830454.2857142857,579878.2857142857,766296.2857142857,538081.2857142857,807672.2857142857,761086.2857142857,779011.2857142857,869396.5714285715,773505.5714285715,3042511.5714285714]}},"Wholesale Hair":{"years_sales":{"2016":{"monthly":[4708561.0,5628843.0,5253117.0,5567167.0,5541370.0,9085333.0,5021856.0,4742893.0,4759895.0,1837078.0,3366823.0,5161986.0],"total":60674922.0},"2017":{"monthly":[6038239.0,3641650.0,4645724.0,5318002.0,8003028.0,11273498.0,5048291.0,8793573.0,4406249.0,3386582.0,5104354.0,4895296.0],"total":70554486.0},"2018":{"monthly":[4434280.0,4683257.0,7324058.0,6119283.0,8932859.0,8465078.0,5840956.0,7781079.0,3597742.0,5035950.0,6177270.0,6070012.0],"total":74461824.0},"2019":{"monthly":[3676189.0,2952239.0,6441320.0,5236534.0,11081304.0,5128563.0,4377139.0,6678979.0,2680635.0,4563823.0,6084908.0,5277727.0],"total":64179360.0},"2020":{"monthly":[4906863.0,7161662.0,4562839.0,7151507.0,12730613.0,7063294.0,11501509.0,4801121.0,8371204.0,9177799.0,9842589.0,7985708.0],"total":95256708.0},"2021":{"monthly":[8107719.0,8705509.0,13426723.0,16169552.0,8357455.0,7454875.0,10274846.0,5367280.0,8283208.0,10923732.0,10764967.0,9207952.0],"total":117043818.0},"2022":{"monthly":[8443736.0,10970903.0,17898156.0,24142563.0,8095474.0,9089660.0,9399200.0,4693132.0,7663188.0,10156652.0,12819397.0,13712929.0],"total":137084990.0},"2023":{"monthly":[11445486.0,15368456.0,18539503.0,21275899.0,10183883.0,11420430.0,5710607.0,12114351.0,12599351.0,14262934.0,14087058.0,14484294.0],"total":161492252.0},"2024":{"monthly":[12388257.0,12447767.0,26186262.0,14191811.0,8507622.0,10069186.0,5308355.0,20374643.0,9967266.0,13964382.0,13793364.0,7082974.0],"total":154281889.0},"2025":{"monthly":[13616559.0,12633321.0,16052140.0,6633237.0,6085562.0,10017708.0,9072151.0,13033153.0,5701303.0,8387100.0,9919377.0,8668261.0],"total":119819872.0},"2026":{"monthly":[12145700.0,12300327.0,8094087.0,6714896.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"total":39255010.0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":154281889.0,"purchase_total":95732699.0,"gross_profit_total":23142283.350000005,"net_profit_total":12808686.683333332,"sale_monthly":[12388257.0,12447767.0,26186262.0,14191811.0,8507622.0,10069186.0,5308355.0,20374643.0,9967266.0,13964382.0,13793364.0,7082974.0],"purchase_monthly":[27472288.0,5130001.0,11145751.0,10569832.0,5895116.0,4542635.0,8044485.0,10172517.0,85650.0,10938705.0,547760.0,1187959.0],"gp_monthly":[1858238.55,1867165.05,3927939.3,2128771.65,1276143.3,1510377.9,796253.25,3056196.4499999997,1495089.9,2094657.2999999998,2069004.5999999999,1062446.0999999999],"np_monthly":[940606.35,1134690.65,2951470.833333333,1213206.8166666667,249789.13333333342,551729.3999999999,-123411.41666666674,2382007.8166666664,858689.9333333332,1136976.9,1418158.0999999999,94772.16666666651]},"2025":{"sale_total":119819872.0,"purchase_total":186576787.0,"gross_profit_total":17972980.799999997,"net_profit_total":6764246.9242857145,"sale_monthly":[13616559.0,12633321.0,16052140.0,6633237.0,6085562.0,10017708.0,9072151.0,13033153.0,5701303.0,8387100.0,9919377.0,8668261.0],"purchase_monthly":[10078900.0,21961971.0,4012838.0,219390.0,6182081.0,9513922.0,85726181.0,11550382.0,7345592.0,6016019.0,15731610.0,8237901.0],"gp_monthly":[2042483.8499999999,1894998.15,2407821.0,994985.5499999999,912834.2999999999,1502656.2,1360822.65,1954972.95,855195.45,1258065.0,1487906.55,1300239.15],"np_monthly":[1216619.974285714,1286255.8642857142,1577183.7142857143,372874.26428571425,141995.01428571425,945641.9142857143,544417.3642857142,1188653.6642857143,82751.16428571427,425835.4285714285,692398.9785714286,-1710380.4214285715]}},"expense":{"2024":10333596.666666668,"2025":11208733.875714285},"expense_monthly":{"2024":[917632.2000000001,732474.4,976468.4666666666,915564.8333333333,1026354.1666666666,958648.5,919664.6666666667,674188.6333333334,636399.9666666667,957680.4,650846.5,967673.9333333333],"2025":[825863.8757142858,608742.2857142857,830637.2857142857,622111.2857142857,770839.2857142857,557014.2857142857,816405.2857142857,766319.2857142857,772444.2857142857,832229.5714285715,795507.5714285715,3010619.5714285714]}},"Wholesale Jewellry":{"years_sales":{"2016":{"monthly":[8083373.0,6622727.0,6758384.0,7229103.0,6121118.0,12509726.0,6091349.0,5905385.0,5977725.0,3959513.0,4701418.0,5864507.0],"total":79824328.0},"2017":{"monthly":[5405586.0,3897981.0,5868947.0,11423544.0,28661675.0,30333246.0,28921441.0,17370282.0,8386105.0,8271016.0,8113975.0,7926764.0],"total":164580562.0},"2018":{"monthly":[11088780.0,7621191.0,11798149.0,11343082.0,15970333.0,16067936.0,10941624.0,10834876.0,5420961.0,9606784.0,12957148.0,16956272.0],"total":140607136.0},"2019":{"monthly":[15748362.0,8253823.0,11798149.0,7575384.0,34498388.0,13360341.0,20671152.0,21440512.0,7991996.0,25790002.0,23748669.0,22323230.0],"total":213200008.0},"2020":{"monthly":[18340657.0,21291993.0,18842628.0,1429530.0,33386160.0,28365721.0,38251767.0,24000044.0,28594993.0,48857231.0,50958373.0,42225155.0],"total":354544252.0},"2021":{"monthly":[27011268.0,32585987.0,28468877.0,39005036.0,21773584.0,37653579.0,40773752.0,25878228.0,31707542.0,40361630.0,39042928.0,35296458.0],"total":399558869.0},"2022":{"monthly":[28820275.0,38907811.0,48347769.0,56395039.0,35191342.0,39820366.0,38743923.0,13985005.0,26430819.0,35480790.0,24173538.0,23983919.0],"total":410280596.0},"2023":{"monthly":[20426433.0,34004878.0,79933484.0,57145143.0,64068453.0,28494259.0,7955380.0,41830514.0,58564920.0,43817603.0,65137305.0,67347509.0],"total":568725881.0},"2024":{"monthly":[75313669.0,63062350.0,76017283.0,52142553.0,68018259.0,112052874.0,16984092.0,38093073.0,43637570.0,67744105.0,104126358.0,61935401.0],"total":779127587.0},"2025":{"monthly":[38303754.0,112939823.0,50173402.0,23989829.0,54401806.0,74031313.0,35038461.0,40938362.0,33146343.0,43773149.0,75069203.0,85535205.0],"total":667340650.0},"2026":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},"2027":{"monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0}},"performance":{"2024":{"sale_total":779127587.0,"purchase_total":840366034.0,"gross_profit_total":116869138.05000001,"net_profit_total":105268533.79633333,"sale_monthly":[75313669.0,63062350.0,76017283.0,52142553.0,68018259.0,112052874.0,16984092.0,38093073.0,43637570.0,67744105.0,104126358.0,61935401.0],"purchase_monthly":[228232034.0,8887175.0,227408021.0,4966544.0,162441551.0,12656858.0,63266373.0,13398020.0,59201837.0,50161794.0,8557868.0,1187959.0],"gp_monthly":[11297050.35,9459352.5,11402592.45,7821382.949999999,10202738.85,16807931.099999998,2547613.8,5713960.95,6545635.5,10161615.75,15618953.7,9290310.15],"np_monthly":[10312924.480999999,8672515.75,10291856.700333333,6820025.563666666,9158666.424333334,15791329.725999998,1684665.0413333331,4879779.243666667,5759697.963333333,8982791.245000001,14729780.842,8184500.815666667]},"2025":{"sale_total":667340650.0,"purchase_total":667672742.0,"gross_profit_total":100101097.49999999,"net_profit_total":87731651.87028572,"sale_monthly":[38303754.0,112939823.0,50173402.0,23989829.0,54401806.0,74031313.0,35038461.0,40938362.0,33146343.0,43773149.0,75069203.0,85535205.0],"purchase_monthly":[55917520.0,95576227.0,45397524.0,34238315.0,22353364.0,59979591.0,44528.0,47945801.0,51107923.0,111164348.0,100669514.0,43278087.0],"gp_monthly":[5745563.1,16940973.45,7526010.3,3598474.35,8160270.899999999,11104696.95,5255769.149999999,6140754.3,4971951.45,6565972.35,11260380.45,12830280.75],"np_monthly":[4857828.470285714,16218618.164285714,6445628.014285714,2916501.064285714,7280758.614285714,10448484.664285714,4360658.864285714,5296430.014285714,4150588.1642857147,5658802.778571428,10366996.878571428,9730356.17857143]}},"expense":{"2024":11600604.253666665,"2025":12369445.629714284},"expense_monthly":{"2024":[984125.8690000001,786836.7500000001,1110735.7496666666,1001357.3863333333,1044072.4256666666,1016601.3740000001,862948.7586666667,834181.7063333334,785937.5366666667,1178824.505,889172.858,1105809.3343333332],"2025":[887734.6297142857,722355.2857142857,1080382.2857142857,681973.2857142857,879512.2857142857,656212.2857142857,895110.2857142857,844324.2857142857,821363.2857142857,907169.5714285715,893383.5714285715,3099924.5714285714]}}},"containers":[{"code":"G-1 China ","date":"2025-05-01","purchase_price":23215224.5,"total_expense":7877285.0,"revenue":3161872.0,"net_amount":5204932.3500000015,"base_selling":30179791.85,"total_cog":24974859.5},{"code":"G-2 China","date":"2025-06-01","purchase_price":62143635.5,"total_expense":10150931.0,"revenue":1325655.0,"net_amount":11808089.650000006,"base_selling":80786726.15,"total_cog":68978636.5},{"code":"G-3 China","date":"2025-07-01","purchase_price":47744920.0,"total_expense":9449024.0,"revenue":3193856.0,"net_amount":8835782.0,"base_selling":62068396.0,"total_cog":53232614.0},{"code":"G-4 China","date":"2025-07-01","purchase_price":27912451.799999997,"total_expense":9042800.0,"revenue":1503610.0,"net_amount":4393525.539999999,"base_selling":36286187.339999996,"total_cog":31892661.799999997},{"code":"G-5 Dubai (LOTT N)","date":"2025-08-05","purchase_price":69624500.56,"total_expense":11865284.0,"revenue":3957136.0,"net_amount":40558398.288,"base_selling":107081642.848,"total_cog":66523244.56},{"code":"G-6 China","date":"2025-09-18","purchase_price":36160227.370000005,"total_expense":8592503.0,"revenue":4766107.0,"net_amount":9025625.211000003,"base_selling":47008295.58100001,"total_cog":37982670.370000005},{"code":"G-7 China","date":"2025-09-18","purchase_price":13828784.38,"total_expense":10298631.0,"revenue":3900685.0,"net_amount":6433325.314000001,"base_selling":17977419.694000002,"total_cog":11544094.38},{"code":"G-9 Dubai (LOTT A)","date":"2025-09-29","purchase_price":68166902.80000001,"total_expense":13217980.0,"revenue":4356172.0,"net_amount":24808775.199999988,"base_selling":104155339.0,"total_cog":79346563.80000001},{"code":"G-8 China","date":"2025-10-08","purchase_price":35829066.5,"total_expense":9790897.0,"revenue":3018345.0,"net_amount":8821174.950000003,"base_selling":46577786.45,"total_cog":37756611.5},{"code":"G-10 China","date":"2025-10-24","purchase_price":46389488.5,"total_expense":11333383.0,"revenue":3809805.0,"net_amount":10286796.550000004,"base_selling":60306335.050000004,"total_cog":50019538.5},{"code":"G-11 China","date":"2025-10-10","purchase_price":17330400.0,"total_expense":9501386.0,"revenue":-1532254.0,"net_amount":1447476.0,"base_selling":22529520.0,"total_cog":21082044.0},{"code":"G-12 China","date":"2025-11-21","purchase_price":23261331.0,"total_expense":8870064.0,"revenue":3481321.0,"net_amount":6139558.300000001,"base_selling":30239730.3,"total_cog":24100172.0},{"code":"G-13 China","date":"2025-11-22","purchase_price":61304713.0,"total_expense":9886118.0,"revenue":3112570.0,"net_amount":8967369.900000006,"base_selling":79696126.9,"total_cog":70728757.0},{"code":"G-14 China","date":"2025-12-04","purchase_price":44898601.0,"total_expense":9617309.0,"revenue":3447249.0,"net_amount":9842927.300000004,"base_selling":58368181.300000004,"total_cog":48525254.0},{"code":"G-15 China","date":"2025-12-31","purchase_price":47795218.0,"total_expense":11701025.0,"revenue":2315504.0,"net_amount":14901161.399999999,"base_selling":62133783.4,"total_cog":47232622.0},{"code":"G-16 China","date":"2026-01-03","purchase_price":20414016.0,"total_expense":13162063.0,"revenue":3845584.0,"net_amount":4953463.800000001,"base_selling":26538220.8,"total_cog":21584757.0},{"code":"G-17 China Lott B","date":"2026-01-09","purchase_price":36835072.0,"total_expense":11045843.0,"revenue":0,"net_amount":10587185.0,"base_selling":57554800.0,"total_cog":46967615.0},{"code":"G-18 China","date":"2026-01-22","purchase_price":14163410.5,"total_expense":8284099.0,"revenue":5118867.0,"net_amount":6039138.150000002,"base_selling":18412433.650000002,"total_cog":12373295.5},{"code":"G-19 China","date":"2026-02-02","purchase_price":14914602.0,"total_expense":6312200.0,"revenue":2463893.0,"net_amount":2304676.6000000015,"base_selling":19388982.6,"total_cog":17084306.0},{"code":"DUBAI Lott C","date":"2026-02-11","purchase_price":34908169.6,"total_expense":10777698.0,"revenue":0,"net_amount":8858147.399999999,"base_selling":54544015.0,"total_cog":45685867.6},{"code":"G-20 China","date":"2026-02-12","purchase_price":22532010.0,"total_expense":6609907.0,"revenue":1990268.0,"net_amount":3733745.0,"base_selling":29291613.0,"total_cog":25557868.0},{"code":"G-21 China","date":"2026-02-23","purchase_price":23094459.5,"total_expense":6165110.0,"revenue":2892315.0,"net_amount":3335087.8500000015,"base_selling":30022797.35,"total_cog":26687709.5},{"code":"DUBAI Lott D","date":"2026-03-06","purchase_price":28010828.8,"total_expense":7725543.0,"revenue":0,"net_amount":8030548.200000003,"base_selling":43766920.0,"total_cog":35736371.8},{"code":"G-22 China","date":"2026-03-14","purchase_price":45799582.599999994,"total_expense":9318772.0,"revenue":3596076.0,"net_amount":10111964.780000001,"base_selling":59539457.379999995,"total_cog":49427492.599999994},{"code":"G-23 China","date":"2026-03-30","purchase_price":47786075.55,"total_expense":9668630.0,"revenue":3124950.0,"net_amount":9485792.665,"base_selling":62121898.214999996,"total_cog":52636105.55},{"code":"G-24 China","date":"2026-04-16","purchase_price":4864331.200000001,"total_expense":5711489.0,"revenue":1902604.0,"net_amount":1951373.3600000003,"base_selling":6323630.560000001,"total_cog":4372257.200000001}],"company_yearly_sales":{"2016":389983068.0,"2017":484528452.0,"2018":549273019.0,"2019":528642621.0,"2020":627025623.0,"2021":843588213.0,"2022":995590053.0,"2023":1358703351.0,"2024":1825449259.0,"2025":1999450250.0,"2026":596343580.0,"2027":0.0},"company_yearly_purchase":{"2022":846670304.0,"2023":1135282293.0,"2024":1870367838.0,"2025":1816169828.0,"2026":0.0,"2027":0.0,"2028":0.0,"2029":0.0,"2030":0.0,"2031":0.0,"2032":0.0,"2033":0.0},"company_dept_yearly_expense":{"2024":178927533.6405,"2025":90153946.552,"2026":0.0,"2027":0.0,"2028":0.0,"2029":0.0,"2030":0.0,"2031":0.0,"2032":0.0,"2033":0.0,"2034":0.0,"2035":0.0},"income_statement_2025":{"sales_by_dept":{"Wholesale Fancy":267853772,"Wholesale Jewellery":667340650,"Wholesale Bangles":167282826,"Wholesale Hair":119819872,"Retail Jewellery":214633997,"Retail Fancy Jewellery":433545032,"Retail Hair":105114944,"Material Warehouse":23859157},"total_revenue":1999450250,"rental_income":{"Al Taj":238000,"Dilawar Bhai":54000,"Ahmed Shoaib Center":660000,"Munir Gaffar":1593320,"Ratan Golden Center":382000,"Sorti Rizwan":310000,"Mubarak Shoaib Center":885000,"Imran China Center":62000,"Ahsan Rizwan":1200000,"Sheryar Bundu Center":540000,"Faisal Arcade":360000},"home_sales":{"Yousuf Bhai":7100000,"Murtaza Lodge":14400000},"total_revenues":4026684820,"expenses":{"Ramdan Bonus":1218200,"Furqan Bonus":663716.745,"Junaid/Kashif/Rashid Bonus":650338.698,"Mufaddal Bonus":2146340.05,"Staff Advance":7554770,"Salary Staff":17742070,"Department Heads Bonus":800000,"Misc Expenses":30279231,"China Monthly Expense":10080000,"Indian Monthly Expense":14623305.5,"Aurovajewells Cost":847800.02,"Utility Bills":5562478,"Maripur Gudown Rent":1680000,"Outside Shop Rent":120000,"Lali Rent":600000,"Software Expense":480000,"Microsoft Subscription":22800,"Google Subscription":10800,"Payroll Software":78000,"Niyaz Jamat":2604000,"Wajebat Jamat":20000000,"Jamat Fmb":2250000,"Car Purchase":2850000,"Shop Purchase":800000},"total_expenses":122863850.013,"gross_profit_by_dept":{"Retail Fancy":86709006.4,"Retail Hair":21022988.8,"Retail Jewellry":42926799.4,"Wholesale Bangles":33456565.2,"Wholesale Fancy":40178065.8,"Wholesale Hair":17972980.8,"Wholesale Jewellry":100101097.5},"total_gross_profit":342367503.9,"total_net_profit":247287973.887},"balance_sheet_2026":{"assets":{"Cash":2000000,"Cash at Home":10000000,"Gold Biscuits":27540000,"Cash at Bank":89991418,"Accounts Receivable":149914618,"Dead Receivable":6579204,"Inventory":570695630,"Stock in Transit":161805150,"Loans":5500000,"Property Assets":700500000},"total_current_assets":1724526020,"liabilities":{"Accounts Payable Lahore":24667662,"Accounts Payable China":124500000,"Accounts Payable Dubai":119474265},"total_current_liabilities":268641927,"difference":1455884093,"annual_sales_label":"230 cr","personal_expense_label":"1.2 cr","personal_balances":{"baf":1394483,"js":497218,"ab fashion":41000,"mufaddal enterprise":1626777,"muhammad hussain":2352416,"ali collection":1608948,"farida enterprise":1891558,"abbas bahl":5855700,"abbas hbl":500000,"bank islamic":100000,"shamoil":72375237,"smb":248081,"hassan meezan":1500000}},"container_summary":{"total_purchase":918928022.6600001,"total_expense":245975974.0,"total_revenue":68752190.0,"total_net":240866040.75800008,"total_cog":1012033989.6600001,"container_count":26},"commission_summary":{"Mufaddal":{"sales":743728192.0,"commission":7437281.92},"Junaid_Kashif_Rashid":{"sales":1314290607.0,"commission":1714236.563},"Furqan":{"sales":2368811001.0,"commission":2368811.0},"DepartmentHeads":{"bonus_total":950000.0}},"company_assets":[{"no":1,"use":"INVESTMENT","particular":"BHARIA TOWN FLAT","location":"BHARIA TOWN FLAT","purchase_cost":3500000.0,"valuation_2026":1500000.0,"total_value":1500000.0,"capital_gain":-2000000.0,"ownership":"MOHAMMAD "},{"no":2,"use":"RENTAL INCOME","particular":"MUNEER SHOP ","location":"BOLTON MARKET","purchase_cost":30000000.0,"valuation_2026":35000000.0,"total_value":36500000.0,"capital_gain":5000000.0,"ownership":"MOHAMMAD "},{"no":3,"use":"HOME ","particular":"KARIM BHAI PLOT B75","location":"KARIM BHAI ","purchase_cost":14000000.0,"valuation_2026":60000000.0,"total_value":96500000.0,"capital_gain":46000000.0,"ownership":"MOHAMMAD "},{"no":4,"use":"HOME ","particular":"KARIM BHAI PLOT A61 ","location":"KARIM BHAI ","purchase_cost":14000000.0,"valuation_2026":60000000.0,"total_value":156500000.0,"capital_gain":46000000.0,"ownership":"HASSAN "},{"no":5,"use":"HOME ","particular":"KARIM BHAI PLOT B73","location":"KARIM BHAI ","purchase_cost":14000000.0,"valuation_2026":60000000.0,"total_value":216500000.0,"capital_gain":46000000.0,"ownership":"ABBAS"},{"no":6,"use":"SHOP ","particular":"CHINA CENTER SHOP ","location":"BOLTON MARKET ","purchase_cost":40000000.0,"valuation_2026":40000000.0,"total_value":256500000.0,"capital_gain":0.0,"ownership":null},{"no":7,"use":"RENTAL INCOME","particular":"FAISAL ARCADE HOME ","location":"SHABBIRABAD","purchase_cost":2200000.0,"valuation_2026":7500000.0,"total_value":264000000.0,"capital_gain":5300000.0,"ownership":null},{"no":8,"use":"RENTAL INCOME","particular":"MADRASA DOUBLE SHOP","location":"KARIM BHAI ","purchase_cost":28000000.0,"valuation_2026":35000000.0,"total_value":299000000.0,"capital_gain":7000000.0,"ownership":null},{"no":9,"use":"RENTAL INCOME","particular":"SHOAIB CENTER AHMED","location":"BOLTON MARKET ","purchase_cost":20000000.0,"valuation_2026":20000000.0,"total_value":319000000.0,"capital_gain":0.0,"ownership":null},{"no":10,"use":"RENTAL INCOME","particular":"SHOAIB CENTER ATIF","location":"BOLTON MARKET ","purchase_cost":15000000.0,"valuation_2026":17500000.0,"total_value":336500000.0,"capital_gain":2500000.0,"ownership":null},{"no":11,"use":"HOME ","particular":"KARIM BHAI ALIFYA ","location":"KARIM BHAI ","purchase_cost":20000000.0,"valuation_2026":45000000.0,"total_value":381500000.0,"capital_gain":25000000.0,"ownership":null},{"no":12,"use":"INVESTMENT","particular":"KARIM BHAI FLAT","location":"KARIM BHAI ","purchase_cost":6500000.0,"valuation_2026":6500000.0,"total_value":388000000.0,"capital_gain":0.0,"ownership":null},{"no":13,"use":"WAREHOUSE","particular":"PATTI GUDOWN","location":"BOLTON MARKET ","purchase_cost":12500000.0,"valuation_2026":17500000.0,"total_value":405500000.0,"capital_gain":5000000.0,"ownership":null},{"no":14,"use":"HOME ","particular":"HAMZA HEIGHT ","location":"SHABBIRABAD","purchase_cost":10000000.0,"valuation_2026":17500000.0,"total_value":423000000.0,"capital_gain":7500000.0,"ownership":null},{"no":15,"use":"WAREHOUSE","particular":"MARIPUR WAREHOUSE","location":"MARIPUR ","purchase_cost":50000000.0,"valuation_2026":50000000.0,"total_value":473000000.0,"capital_gain":0.0,"ownership":null},{"no":16,"use":"SHOP ","particular":"SHOP BUILDING","location":"BOLTON MARKET ","purchase_cost":100000000.0,"valuation_2026":200000000.0,"total_value":673000000.0,"capital_gain":100000000.0,"ownership":null},{"no":17,"use":"SHOP ","particular":"OUTSIDE MUFADDAL SHOP ","location":"BOLTON MARKET ","purchase_cost":5000000.0,"valuation_2026":20000000.0,"total_value":693000000.0,"capital_gain":15000000.0,"ownership":null},{"no":18,"use":"INVESTMENT","particular":"MUNIR OFFICE ","location":"BOLTON MARKET ","purchase_cost":12500000.0,"valuation_2026":12500000.0,"total_value":705500000.0,"capital_gain":0.0,"ownership":null}],"company_assets_summary":{"total_purchase_cost":397200000.0,"total_valuation_2026":705500000.0,"total_capital_gain":308300000.0},"rental_income_2026":[{"particular":"FAISAL ARCADE ","monthly":30000.0,"yearly":360000.0},{"particular":"AHMED SHOAIB CENTER SHOP","monthly":55000.0,"yearly":660000.0},{"particular":"MUBARAK SHOAIB CENTER SHOP","monthly":85000.0,"yearly":1020000.0},{"particular":"MADRASA BUILDING SHOP ","monthly":105000.0,"yearly":1260000.0},{"particular":"MUNEER GAFFAR SHOP ","monthly":110000.0,"yearly":1320000.0}],"rental_income_2026_total":4620000.0,"company_overhead_expense":{"2024":{"monthly":[1469125.348,1485184.28,1944853.074,1737581.32,2939848.527,1401408.0929999999,1478313.85,1365437.6469999999,2234224.637,2446263.249,2454790.535,2531775.898],"total":23488806.457999997},"2025":{"monthly":[2645675.4560000002,2622796.9189999998,2900176.346,3768821.159,2596165.5915,2464142.8045,2251560.2585,2276776.7254999997,2232399.514,2047499.3435,1967580.96,2201840.4155],"total":29975435.492999993},"2026":{"monthly":[2035118.0,2355056.9390000002,4328623.359999999,2311078.0,224436.1155,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"total":11254312.414499998}},"big_purchases_2026":[{"item":"Warehouse Purchase ","amount":50100000.0},{"item":"Car ","amount":2850000.0},{"item":"Car ","amount":6700000.0},{"item":"New Shop Fashion wala","amount":6000000.0},{"item":"New Ofiice   ","amount":12000000.0}],"misc_expense_monthly_2026":{"December 2026":11212961.0,"January 2026":3150900.0,"Feburary 2026":3480800.0,"March 2026":507900.0,"April 2026":78000.0,"May 2026":1014567.0,"June 2026":0.0},"company_monthly":{"2024":{"sales":[149546218.0,139643113.0,214271422.0,134085936.0,120339166.0,162060854.0,58229346.0,123553731.0,153590846.0,176982521.0,209498635.0,183647471.0],"purchase":[300512861.0,48362603.0,282626654.0,119162059.0,204916436.0,91434091.0,146935769.0,51182715.0,155456311.0,120616718.0,168796039.0,163821269.0],"gross_profit":[25524147.3,24153116.75,37744107.15,23500469.0,20241539.15,26306067.799999997,10271621.05,20801339.8,25358866.2,28510785.65,33514770.25,30028692.650000006],"net_profit":[19481298.085333332,19129331.403333332,30453630.609333336,17147673.013333336,13838298.956333335,20261631.140333332,4657521.533333333,15754230.686333332,20566720.8695,21668264.609000005,28462886.666500002,23243546.1035]},"2025":{"sales":[163033255.0,243599472.0,219292630.0,103066377.0,137602503.0,130968437.0,124953883.0,137955347.0,148263104.0,171169936.0,206688716.0,212856590.0],"purchase":[127626990.0,271309709.0,178474108.0,108573419.0,73794861.0,152211716.0,101976746.0,156334902.0,123516216.0,215448619.0,180008698.0,131256775.0],"gross_profit":[28746499.450000003,41514683.599999994,39984991.5,18242290.8,23894291.7,21735863.349999998,21911001.5,23783489.35,26193757.75,30031497.85,35084215.45,36016753.0],"net_profit":[22000402.944,36372116.908,31917274.047000002,13000516.67,17548577.3145,17114146.8585,15449986.7025,17615925.986500002,19954864.179,23207078.655500002,28539562.693,14264935.789500002]},"2026":{"sales":[149725764.0,181121025.0,148260820.0,117235971.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"purchase":[775978.0,5291811.0,12310662.0,821177.0,0,0,0.0,0.0,0.0,0.0,0.0,0.0],"gross_profit":[1536126.0,2624679.6,1966446.2000000002,1228604.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"net_profit":[1536126.0,2624679.6,1966446.2000000002,1228604.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}},"dept_2025":{"Wholesale Material":{"sale":23859157.0,"purchase":16612063.0,"gross_profit":4771831.399999999,"net_profit":3228909.4000000004,"expense":1542922.0},"Retail Hair":{"sale":105114944.0,"purchase":95046114.0,"gross_profit":21022988.800000004,"net_profit":9349748.924285715,"expense":11673239.875714283},"Retail Fancy":{"sale":433545032.0,"purchase":339339158.0,"gross_profit":86709006.39999999,"net_profit":71973661.82628572,"expense":14735344.573714286},"Retail Jewelry":{"sale":214633997.0,"purchase":171608547.0,"gross_profit":42926799.4,"net_profit":26826943.554285716,"expense":16099855.845714286},"Wholesale Bangles":{"sale":167282826.0,"purchase":103106269.0,"gross_profit":33456565.2,"net_profit":21971094.324285716,"expense":11485470.875714283},"Wholesale Fancy":{"sale":267853772.0,"purchase":240571079.0,"gross_profit":40178065.800000004,"net_profit":29139131.924285714,"expense":11038933.875714285},"Wholesale Hair":{"sale":119819872.0,"purchase":186576787.0,"gross_profit":17972980.799999997,"net_profit":6764246.9242857145,"expense":11208733.875714285},"Wholesale Jewellry":{"sale":667340650.0,"purchase":667672742.0,"gross_profit":100101097.49999999,"net_profit":87731651.87028572,"expense":12369445.629714284}},"dept_2026":{"Wholesale Material":{"sale":10980271.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Retail Hair":{"sale":36779279.0,"purchase":19199628.0,"gross_profit":7355855.800000001,"net_profit":7355855.800000001,"expense":0},"Retail Fancy":{"sale":213897686.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Retail Jewelry":{"sale":98117611.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Wholesale Bangles":{"sale":106119682.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Wholesale Fancy":{"sale":91194041.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Wholesale Hair":{"sale":39255010.0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0},"Wholesale Jewellry":{"sale":0,"purchase":0,"gross_profit":0,"net_profit":0,"expense":0}},"channel_2025":{"Retail":{"sale":753293973.0,"purchase":605993819.0,"gross_profit":150658794.6,"net_profit":108150354.30485715,"expense":42508440.29514286},"Wholesale":{"sale":1246156277.0,"purchase":1214538940.0,"gross_profit":196480540.7,"net_profit":148835034.44314286,"expense":47645506.25685714}},"kpis":{"total_sales_2025":1999450250.0,"total_purchase_2025":1820532759.0,"total_gross_profit_2025":347139335.3,"total_net_profit_2025":256985388.74800003,"total_dept_expense_2025":90153946.552,"overhead_expense_2025":29975435.492999993,"total_sales_2026_ytd":596343580.0,"total_purchase_2026_ytd":19199628.0,"total_gross_profit_2026_ytd":7355855.800000001,"total_net_profit_2026_ytd":7355855.800000001,"total_dept_expense_2026_ytd":0,"overhead_expense_2026_ytd":11254312.414499998,"rental_income_2026":4620000.0,"total_assets_value_2026":705500000.0}}
+;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const COLORS = ['#7c5cf0','#4f7df0','#1fc8c8','#3ecf8e','#ff9f5a','#ff6f9f','#9b6cf0','#5b6ef0','#f4c95d','#6fcf97'];
+
+function fmtPKR(n){
+  n = Number(n)||0;
+  const sign = n<0 ? '-' : '';
+  const a = Math.abs(n);
+  if(a>=1e7) return sign + (a/1e7).toFixed(2) + ' Cr';
+  if(a>=1e5) return sign + (a/1e5).toFixed(2) + ' Lac';
+  if(a>=1e3) return sign + (a/1e3).toFixed(1) + 'K';
+  return sign + a.toFixed(0);
+}
+function fmtFull(n){ return Math.round(Number(n)||0).toLocaleString('en-PK'); }
+
+// ---------- Tabs ----------
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+Chart.defaults.font.family = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+Chart.defaults.color = '#6b6f8a';
+
+/* =================== OVERVIEW =================== */
+(function(){
+  const k = DATA.kpis;
+  document.getElementById('kpi-sales-2025').textContent = fmtPKR(k.total_sales_2025);
+  document.getElementById('kpi-sales-2026').textContent = fmtPKR(k.total_sales_2026_ytd);
+  document.getElementById('kpi-sales-2026-sub').textContent = 'Jan–Apr 2026 actuals';
+  document.getElementById('kpi-gp-2025').textContent = fmtPKR(k.total_gross_profit_2025);
+  document.getElementById('kpi-gp-margin').textContent = 'Margin: ' + (100*k.total_gross_profit_2025/k.total_sales_2025).toFixed(1) + '%';
+  document.getElementById('kpi-np-2025').textContent = fmtPKR(k.total_net_profit_2025);
+  document.getElementById('kpi-np-margin').textContent = 'Margin: ' + (100*k.total_net_profit_2025/k.total_sales_2025).toFixed(1) + '%';
+  document.getElementById('kpi-purch-2025').textContent = fmtPKR(k.total_purchase_2025);
+  document.getElementById('kpi-exp-2025').textContent = fmtPKR(k.total_dept_expense_2025 + k.overhead_expense_2025);
+  document.getElementById('kpi-rental').textContent = fmtPKR(k.rental_income_2026);
+  document.getElementById('kpi-assets').textContent = fmtPKR(k.total_assets_value_2026);
+  document.getElementById('kpi-assets-gain').textContent = 'Gain: ' + fmtPKR(DATA.company_assets_summary.total_capital_gain);
+
+  // Sales by department donut (2025)
+  const dept2025 = DATA.dept_2025;
+  const deptLabels = Object.keys(dept2025);
+  new Chart(document.getElementById('chartDeptDonut'),{
+    type:'doughnut',
+    data:{labels:deptLabels, datasets:[{data:deptLabels.map(d=>dept2025[d].sale), backgroundColor:COLORS, borderWidth:2, borderColor:'#fff'}]},
+    options:{plugins:{legend:{position:'right', labels:{boxWidth:12, font:{size:11}}}},
+      cutout:'62%',
+      plugins:{legend:{position:'right', labels:{boxWidth:12,font:{size:11}}}, tooltip:{callbacks:{label:c=>` ${c.label}: PKR ${fmtPKR(c.raw)}`}}}}
+  });
+
+  // Monthly sales 2025 vs 2026
+  const m25 = DATA.company_monthly['2025'].sales;
+  const m26 = DATA.company_monthly['2026'].sales.map(v=>v===0?null:v);
+  new Chart(document.getElementById('chartMonthlySales'),{
+    type:'line',
+    data:{labels:MONTHS, datasets:[
+      {label:'2025', data:m25, borderColor:'#4f7df0', backgroundColor:'rgba(79,125,240,.08)', tension:.35, fill:true},
+      {label:'2026', data:m26, borderColor:'#1fc8c8', backgroundColor:'rgba(31,200,200,.1)', tension:.35, fill:true, spanGaps:false}
+    ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Yearly trend + projection
+  const ys = DATA.company_yearly_sales;
+  const years = Object.keys(ys).filter(y=>y!='2027').map(Number);
+  const actualVals = years.map(y=>ys[y]);
+  // projection: average growth of last 3 complete years (2022-2025)
+  const g1 = ys[2023]/ys[2022], g2 = ys[2024]/ys[2023], g3 = ys[2025]/ys[2024];
+  const avgGrowth = (g1+g2+g3)/3;
+  let last = ys[2025];
+  const projYears = [2027,2028,2029];
+  const projVals = projYears.map(()=>{ last = last*avgGrowth; return last; });
+  const allYears = [...years, ...projYears];
+  const actualData = [...actualVals, null, null, null];
+  const projData = [...years.map(()=>null).slice(0,-1), ys[2025+0]===undefined?null:null];
+  // build projection line starting from 2025 actual through projection years
+  const projLine = allYears.map((y,i)=>{
+    if(y===2025) return ys[2025];
+    if(y>2025) return projVals[projYears.indexOf(y)];
+    return null;
+  });
+  new Chart(document.getElementById('chartYearlyTrend'),{
+    type:'bar',
+    data:{labels:allYears, datasets:[
+      {type:'bar', label:'Actual Sales', data:actualData, backgroundColor:'#7c5cf0', borderRadius:6},
+      {type:'line', label:'2026 YTD (annualising trend)', data:projLine, borderColor:'#ff9f5a', borderDash:[6,4], tension:.3, fill:false, pointRadius:3}
+    ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Retail vs Wholesale
+  const ch = DATA.channel_2025;
+  new Chart(document.getElementById('chartChannel'),{
+    type:'bar',
+    data:{labels:['Sales','Gross Profit','Net Profit'],
+      datasets:[
+        {label:'Retail', data:[ch.Retail.sale, ch.Retail.gross_profit, ch.Retail.net_profit], backgroundColor:'#7c5cf0', borderRadius:6},
+        {label:'Wholesale', data:[ch.Wholesale.sale, ch.Wholesale.gross_profit, ch.Wholesale.net_profit], backgroundColor:'#1fc8c8', borderRadius:6}
+      ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+})();
+
+/* =================== SALES & DEPARTMENTS =================== */
+(function(){
+  const d25 = DATA.dept_2025, d26 = DATA.dept_2026;
+  const labels = Object.keys(d25);
+
+  new Chart(document.getElementById('chartDeptYearCompare'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'2025', data:labels.map(l=>d25[l].sale), backgroundColor:'#7c5cf0', borderRadius:5},
+      {label:'2026 YTD', data:labels.map(l=>d26[l].sale), backgroundColor:'#1fc8c8', borderRadius:5}
+    ]},
+    options:{indexAxis:'y', plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{x:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  new Chart(document.getElementById('chartDeptProfit'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Gross Profit', data:labels.map(l=>d25[l].gross_profit), backgroundColor:'#3ecf8e', borderRadius:5},
+      {label:'Net Profit', data:labels.map(l=>d25[l].net_profit), backgroundColor:'#4f7df0', borderRadius:5}
+    ]},
+    options:{indexAxis:'y', plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{x:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  const cm = DATA.company_monthly['2025'];
+  new Chart(document.getElementById('chartMonthlyCombo'),{
+    data:{labels:MONTHS, datasets:[
+      {type:'bar', label:'Sales', data:cm.sales, backgroundColor:'#7c5cf0', borderRadius:5, order:2},
+      {type:'bar', label:'Purchases', data:cm.purchase, backgroundColor:'#ffb98a', borderRadius:5, order:2},
+      {type:'line', label:'Net Profit', data:cm.net_profit, borderColor:'#1fc8c8', backgroundColor:'#1fc8c8', tension:.35, yAxisID:'y', order:1, pointRadius:3}
+    ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // table
+  const retail = ["Retail Hair","Retail Fancy","Retail Jewelry"];
+  const tbody = document.querySelector('#deptTable tbody');
+  labels.forEach(l=>{
+    const r = d25[l];
+    const margin = r.sale ? (100*r.net_profit/r.sale) : 0;
+    const channel = retail.includes(l) ? 'Retail' : 'Wholesale';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><strong>${l}</strong></td>
+      <td><span class="pill ${channel.toLowerCase()}">${channel}</span></td>
+      <td>${fmtFull(r.sale)}</td>
+      <td>${fmtFull(r.purchase)}</td>
+      <td>${fmtFull(r.gross_profit)}</td>
+      <td>${fmtFull(r.net_profit)}</td>
+      <td class="${margin>=0?'pos':'neg'}">${margin.toFixed(1)}%</td>
+      <td>${fmtFull(r.expense)}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+
+/* =================== FINANCIALS =================== */
+(function(){
+  const inc = DATA.income_statement_2025;
+  document.getElementById('fin-revenue').textContent = fmtPKR(inc.total_revenues);
+  document.getElementById('fin-expenses').textContent = fmtPKR(inc.total_expenses);
+  document.getElementById('fin-gp').textContent = fmtPKR(inc.total_gross_profit);
+  document.getElementById('fin-np').textContent = fmtPKR(inc.total_net_profit);
+
+  // Expense breakdown pie - top items
+  const expEntries = Object.entries(inc.expenses).sort((a,b)=>b[1]-a[1]);
+  const top = expEntries.slice(0,8);
+  const otherSum = expEntries.slice(8).reduce((s,e)=>s+e[1],0);
+  const pieLabels = top.map(e=>e[0]).concat(otherSum>0?['Other']:[]);
+  const pieData = top.map(e=>e[1]).concat(otherSum>0?[otherSum]:[]);
+  new Chart(document.getElementById('chartExpensePie'),{
+    type:'pie',
+    data:{labels:pieLabels, datasets:[{data:pieData, backgroundColor:COLORS.concat(['#c9ccdb']), borderWidth:2, borderColor:'#fff'}]},
+    options:{plugins:{legend:{position:'right', labels:{boxWidth:12,font:{size:10}}}, tooltip:{callbacks:{label:c=>` ${c.label}: PKR ${fmtPKR(c.raw)}`}}}}
+  });
+
+  // Overhead trend
+  const oh = DATA.company_overhead_expense;
+  new Chart(document.getElementById('chartOverheadTrend'),{
+    type:'line',
+    data:{labels:MONTHS, datasets:[
+      {label:'2024', data:oh['2024'].monthly, borderColor:'#c9ccdb', tension:.3},
+      {label:'2025', data:oh['2025'].monthly, borderColor:'#7c5cf0', tension:.3},
+      {label:'2026', data:oh['2026'].monthly.map(v=>v===0?null:v), borderColor:'#ff9f5a', tension:.3, spanGaps:false}
+    ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Balance sheet
+  const bs = DATA.balance_sheet_2026;
+  new Chart(document.getElementById('chartBalanceSheet'),{
+    type:'bar',
+    data:{labels:['Current Assets','Current Liabilities','Net Position'],
+      datasets:[{label:'Amount', data:[bs.total_current_assets, bs.total_current_liabilities, bs.difference],
+        backgroundColor:['#3ecf8e','#ff6f9f','#4f7df0'], borderRadius:6}]},
+    options:{plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Misc expense 2026
+  const misc = DATA.misc_expense_monthly_2026;
+  const order = ['January 2026','Feburary 2026','March 2026','April 2026','May 2026','June 2026','December 2026'];
+  const miscLabels = order.filter(o=>misc[o]!==undefined);
+  new Chart(document.getElementById('chartMiscExpense'),{
+    type:'bar',
+    data:{labels:miscLabels.map(l=>l.replace(' 2026','')), datasets:[{label:'Misc Expense', data:miscLabels.map(l=>misc[l]), backgroundColor:'#ff9f5a', borderRadius:6}]},
+    options:{plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` PKR ${fmtPKR(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Big purchases table
+  const bp = document.querySelector('#bigPurchaseTable tbody');
+  DATA.big_purchases_2026.forEach(p=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.item}</td><td>${fmtFull(p.amount)}</td>`;
+    bp.appendChild(tr);
+  });
+
+  // Assets breakdown 2026
+  const assets = bs.assets;
+  new Chart(document.getElementById('chartAssetsBreakdown'),{
+    type:'bar',
+    data:{labels:Object.keys(assets), datasets:[{label:'Value', data:Object.values(assets), backgroundColor:COLORS, borderRadius:5}]},
+    options:{indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` PKR ${fmtPKR(c.raw)}`}}},
+      scales:{x:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+})();
+
+/* =================== OPERATIONS & ASSETS =================== */
+(function(){
+  const cs = DATA.container_summary;
+  document.getElementById('op-container-count').textContent = cs.container_count;
+  document.getElementById('op-container-purchase').textContent = fmtPKR(cs.total_purchase);
+  document.getElementById('op-container-net').textContent = fmtPKR(cs.total_net);
+
+  const as = DATA.company_assets_summary;
+  document.getElementById('op-asset-value').textContent = fmtPKR(as.total_valuation_2026);
+  document.getElementById('op-asset-gain').textContent = 'Capital gain: ' + fmtPKR(as.total_capital_gain);
+
+  // Containers chart
+  const containers = DATA.containers;
+  new Chart(document.getElementById('chartContainers'),{
+    type:'bar',
+    data:{labels:containers.map(c=>c.code), datasets:[{label:'Net Profit', data:containers.map(c=>c.net_amount),
+      backgroundColor:containers.map(c=>c.net_amount>=0?'#3ecf8e':'#ff6f9f'), borderRadius:4}]},
+    options:{plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` PKR ${fmtPKR(c.raw)}`}}},
+      scales:{x:{ticks:{font:{size:9}, maxRotation:90, minRotation:60}}, y:{ticks:{callback:v=>fmtPKR(v)}}}}
+  });
+
+  // Commission chart
+  const com = DATA.commission_summary;
+  new Chart(document.getElementById('chartCommission'),{
+    type:'bar',
+    data:{labels:['Mufaddal','Furqan','Junaid/Kashif/Rashid'],
+      datasets:[
+        {label:'Sales Generated', data:[com.Mufaddal.sales, com.Furqan.sales, com.Junaid_Kashif_Rashid.sales], backgroundColor:'#4f7df0', borderRadius:6, yAxisID:'y'},
+        {label:'Commission Earned', data:[com.Mufaddal.commission, com.Furqan.commission, com.Junaid_Kashif_Rashid.commission], backgroundColor:'#ff9f5a', borderRadius:6, yAxisID:'y1'}
+      ]},
+    options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+      scales:{
+        y:{position:'left', ticks:{callback:v=>fmtPKR(v)}, title:{display:true,text:'Sales'}},
+        y1:{position:'right', ticks:{callback:v=>fmtPKR(v)}, grid:{drawOnChartArea:false}, title:{display:true,text:'Commission'}}
+      }}
+  });
+
+  // Container table
+  const ct = document.querySelector('#containerTable tbody');
+  containers.forEach((c,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${c.code}</td><td>${c.date}</td><td>${fmtFull(c.purchase_price)}</td>
+      <td>${fmtFull(c.total_expense)}</td><td>${fmtFull(c.revenue)}</td>
+      <td class="${c.net_amount>=0?'pos':'neg'}">${fmtFull(c.net_amount)}</td>`;
+    ct.appendChild(tr);
+  });
+
+  // Assets table
+  const at = document.querySelector('#assetsTable tbody');
+  DATA.company_assets.forEach(a=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.no}</td><td>${a.particular}</td><td>${a.use}</td><td>${a.location}</td>
+      <td>${fmtFull(a.purchase_cost)}</td><td>${fmtFull(a.valuation_2026)}</td>
+      <td class="${a.capital_gain>=0?'pos':'neg'}">${fmtFull(a.capital_gain)}</td>`;
+    at.appendChild(tr);
+  });
+
+  // Rental table
+  document.getElementById('rental-total').textContent = 'PKR ' + fmtPKR(DATA.rental_income_2026_total);
+  const rt = document.querySelector('#rentalTable tbody');
+  DATA.rental_income_2026.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.particular}</td><td>${fmtFull(r.monthly)}</td><td>${fmtFull(r.yearly)}</td>`;
+    rt.appendChild(tr);
+  });
+})();
+
+/* =================== CUSTOM DATE RANGE =================== */
+(function(){
+  const YEARS = [2024,2025,2026];
+  const monthOptions = MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+  const yearOptions = YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
+  ['rangeFromMonth','rangeToMonth'].forEach(id=>document.getElementById(id).innerHTML = monthOptions);
+  ['rangeFromYear','rangeToYear'].forEach(id=>document.getElementById(id).innerHTML = yearOptions);
+
+  // find the latest month that has company-wide sales data, to use as a sensible default range end
+  let lastY = 2024, lastM = 0;
+  YEARS.forEach(y=>{
+    const arr = (DATA.company_monthly[y]||{}).sales || [];
+    arr.forEach((v,i)=>{ if(v){ lastY = y; lastM = i; } });
+  });
+
+  document.getElementById('rangeFromMonth').value = 0;
+  document.getElementById('rangeFromYear').value = 2025;
+  document.getElementById('rangeToMonth').value = lastM;
+  document.getElementById('rangeToYear').value = lastY;
+
+  let rangeDonut, rangeTrend;
+  const idx = (y,m)=> (y-2024)*12 + m;
+
+  function getMonths(){
+    const fy = +document.getElementById('rangeFromYear').value;
+    const fm = +document.getElementById('rangeFromMonth').value;
+    const ty = +document.getElementById('rangeToYear').value;
+    const tm = +document.getElementById('rangeToMonth').value;
+    let a = idx(fy,fm), b = idx(ty,tm);
+    if(a>b) [a,b] = [b,a];
+    const months = [];
+    for(let i=a;i<=b;i++){
+      const y = 2024 + Math.floor(i/12), m = i%12;
+      months.push({y, m, label: MONTHS[m]+' '+y});
+    }
+    return months;
+  }
+
+  function renderRange(){
+    const months = getMonths();
+    document.getElementById('rangeLabel').textContent =
+      months[0].label + ' \u2192 ' + months[months.length-1].label + '  (' + months.length + ' months)';
+
+    let sales=0, purchase=0, gp=0, np=0, overhead=0;
+    months.forEach(({y,m})=>{
+      const cm = DATA.company_monthly[y];
+      if(cm){ sales += cm.sales[m]||0; purchase += cm.purchase[m]||0; gp += cm.gross_profit[m]||0; np += cm.net_profit[m]||0; }
+      const oh = DATA.company_overhead_expense[y];
+      if(oh) overhead += oh.monthly[m]||0;
+    });
+
+    document.getElementById('rng-sales').textContent = fmtPKR(sales);
+    document.getElementById('rng-purchase').textContent = fmtPKR(purchase);
+    document.getElementById('rng-gp').textContent = fmtPKR(gp);
+    document.getElementById('rng-gp-margin').textContent = sales ? 'Margin: '+(100*gp/sales).toFixed(1)+'%' : '';
+    document.getElementById('rng-np').textContent = fmtPKR(np);
+    document.getElementById('rng-np-margin').textContent = sales ? 'Margin: '+(100*np/sales).toFixed(1)+'%' : '';
+    document.getElementById('rng-overhead').textContent = fmtPKR(overhead);
+    document.getElementById('rng-avg-sales').textContent = fmtPKR(sales/months.length);
+
+    // department sales within range
+    const deptLabels = Object.keys(DATA.dept_2025);
+    const deptSales = deptLabels.map(d=>{
+      let s = 0;
+      months.forEach(({y,m})=>{
+        const ys = DATA.departments[d].years_sales[y];
+        if(ys) s += ys.monthly[m]||0;
+      });
+      return s;
+    });
+
+    if(rangeDonut) rangeDonut.destroy();
+    rangeDonut = new Chart(document.getElementById('chartRangeDonut'),{
+      type:'doughnut',
+      data:{labels:deptLabels, datasets:[{data:deptSales, backgroundColor:COLORS, borderWidth:2, borderColor:'#fff'}]},
+      options:{cutout:'62%', plugins:{legend:{position:'right', labels:{boxWidth:12,font:{size:11}}}, tooltip:{callbacks:{label:c=>` ${c.label}: PKR ${fmtPKR(c.raw)}`}}}}
+    });
+
+    // monthly trend within range
+    const salesArr = months.map(({y,m})=> (DATA.company_monthly[y] && DATA.company_monthly[y].sales[m]) || 0);
+    const purchaseArr = months.map(({y,m})=> (DATA.company_monthly[y] && DATA.company_monthly[y].purchase[m]) || 0);
+    const npArr = months.map(({y,m})=> (DATA.company_monthly[y] && DATA.company_monthly[y].net_profit[m]) || 0);
+
+    if(rangeTrend) rangeTrend.destroy();
+    rangeTrend = new Chart(document.getElementById('chartRangeTrend'),{
+      data:{labels:months.map(mo=>mo.label), datasets:[
+        {type:'bar', label:'Sales', data:salesArr, backgroundColor:'#7c5cf0', borderRadius:5},
+        {type:'bar', label:'Purchases', data:purchaseArr, backgroundColor:'#ffb98a', borderRadius:5},
+        {type:'line', label:'Net Profit', data:npArr, borderColor:'#1fc8c8', backgroundColor:'#1fc8c8', tension:.35, pointRadius:3}
+      ]},
+      options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtPKR(c.raw)}`}}},
+        scales:{y:{ticks:{callback:v=>fmtPKR(v)}}, x:{ticks:{maxRotation:60, minRotation:0, font:{size:10}}}}}
+    });
+
+    // containers landed within range
+    const a = idx(months[0].y, months[0].m), b = idx(months[months.length-1].y, months[months.length-1].m);
+    const containersInRange = DATA.containers.filter(c=>{
+      const y = +c.date.slice(0,4), m = +c.date.slice(5,7)-1;
+      const i = idx(y,m);
+      return i>=a && i<=b;
+    });
+    document.getElementById('rng-containers').textContent = containersInRange.length;
+    const containerNet = containersInRange.reduce((s,c)=>s+c.net_amount,0);
+    document.getElementById('rng-container-net').textContent = fmtPKR(containerNet);
+
+    const ct = document.querySelector('#rangeContainerTable tbody');
+    ct.innerHTML = '';
+    if(containersInRange.length===0){
+      ct.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">No containers landed in this range</td></tr>';
+    } else {
+      containersInRange.forEach((c,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${c.code}</td><td>${c.date}</td><td>${fmtFull(c.purchase_price)}</td>
+          <td>${fmtFull(c.total_expense)}</td><td>${fmtFull(c.revenue)}</td>
+          <td class="${c.net_amount>=0?'pos':'neg'}">${fmtFull(c.net_amount)}</td>`;
+        ct.appendChild(tr);
+      });
+    }
+  }
+
+  ['rangeFromMonth','rangeFromYear','rangeToMonth','rangeToYear'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', renderRange);
+  });
+
+  renderRange();
+})();
+
+</script>
+</body>
+</html>
