@@ -89,6 +89,14 @@ select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); back
 #lockscreen button:hover{background:var(--purple-d);}
 #lockscreen .lock-error{color:#e05a5a; font-size:12px; margin-top:10px; min-height:14px;}
 body.locked > *:not(#lockscreen){display:none !important;}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.4px;}
+.pill.retail{background:rgba(62,207,142,.15);color:#1a9e60;}
+.pill.wholesale{background:rgba(79,125,240,.15);color:#2a5bc4;}
+.pill.neg{background:rgba(224,90,90,.15);color:#c0392b;}
+td.pos{color:#1a9e60;}
+td.neg{color:#c0392b;}
+.table-scroll table tbody tr:hover{background:rgba(124,92,240,.04);}
 </style>
 </head>
 <body class="locked">
@@ -118,6 +126,9 @@ body.locked > *:not(#lockscreen){display:none !important;}
     <button data-tab="financials">Financials</button>
     <button data-tab="ops">Operations &amp; Assets</button>
     <button data-tab="range">Custom Date Range</button>
+    <button data-tab="deptsales">Dept Sales</button>
+    <button data-tab="debtors">Debtors &amp; Creditors</button>
+    <button data-tab="stock">Stock &amp; Expenses</button>
   </nav>
 </header>
 
@@ -351,6 +362,199 @@ body.locked > *:not(#lockscreen){display:none !important;}
     <div class="table-scroll">
       <table id="rangeContainerTable">
         <thead><tr><th>#</th><th>Container</th><th>Date</th><th>Purchase Price</th><th>Total Expense</th><th>Revenue (Carry)</th><th>Net Profit</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== DEPT SALES ===================== -->
+<section id="deptsales" class="tabpanel">
+  <div class="section-title"><span class="dot"></span>Department Sales — Monthly (Cash vs Credit)</div>
+  <div class="card" style="margin-bottom:18px;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);font-weight:600;">Year</label><br>
+        <select id="dsSaleYear" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:13px;">
+          <option>2026</option><option>2025</option><option>2024</option><option>2023</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+    <div class="kpi k1"><div class="label">Retail Jewellery</div><div class="value" id="ds-kpi-rj"></div><div class="sub">Teller: MUFADDAL</div></div>
+    <div class="kpi k2"><div class="label">Retail Fancy</div><div class="value" id="ds-kpi-rf"></div><div class="sub">Teller: JUNAID</div></div>
+    <div class="kpi k5"><div class="label">Retail Hair</div><div class="value" id="ds-kpi-rh"></div><div class="sub">Teller: AMIR</div></div>
+    <div class="kpi k3"><div class="label">Wholesale Bangles</div><div class="value" id="ds-kpi-wb"></div><div class="sub">Teller: RAMEEZ</div></div>
+    <div class="kpi k6"><div class="label">Wholesale Fancy</div><div class="value" id="ds-kpi-wf"></div><div class="sub">Teller: RIAZ</div></div>
+    <div class="kpi k4"><div class="label">Wholesale Jewellery</div><div class="value" id="ds-kpi-wj"></div><div class="sub">Teller: FURQAN</div></div>
+    <div class="kpi k7"><div class="label">Wholesale Hair</div><div class="value" id="ds-kpi-wh"></div><div class="sub">Teller: FAIZAN</div></div>
+    <div class="kpi k8"><div class="label">Total (Selected Year)</div><div class="value" id="ds-kpi-total"></div><div class="sub" id="ds-kpi-total-sub"></div></div>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+    <div class="kpi k3"><div class="label">Total Cash Sales — May 26</div><div class="value" id="ds-kpi-cash"></div><div class="sub">Retail tag (net of returns)</div></div>
+    <div class="kpi k6"><div class="label">Total Credit Sales — May 26</div><div class="value" id="ds-kpi-credit"></div><div class="sub">Limited tag (net of returns)</div></div>
+    <div class="kpi k1"><div class="label">Total Returns — May 26</div><div class="value" id="ds-kpi-returns"></div><div class="sub">Cash + Credit returns</div></div>
+    <div class="kpi k8"><div class="label">Grand Net Sales — May 26</div><div class="value" id="ds-kpi-grandnet"></div><div class="sub">All departments combined</div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Monthly Sales by Department</h3>
+      <div class="card-sub">All departments — selected year</div>
+      <div class="chart-wrap tall"><canvas id="chartDsMonthly"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Department Sales Share</h3>
+      <div class="card-sub">Proportion of total sales — selected year</div>
+      <div class="chart-wrap tall"><canvas id="chartDsDonut"></canvas></div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px;" class="card">
+    <h3>Cash vs Credit Net Sales — May 2026</h3>
+    <div class="card-sub">Retail tag = Cash Sales &nbsp;·&nbsp; Limited tag = Credit Sales &nbsp;·&nbsp; Figures are net of returns (Billix POS data)</div>
+    <div class="chart-wrap tall"><canvas id="chartDsCashCredit"></canvas></div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Department &amp; Teller Summary — May 2026</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="dsTellerTable">
+        <thead><tr><th>Department</th><th>Teller</th><th>Type</th><th>Cash Sales</th><th>Cash Returns</th><th>Cash Net</th><th>Credit Sales</th><th>Credit Returns</th><th>Credit Net</th><th>Total Net</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DEBTORS & CREDITORS ===================== -->
+<section id="debtors" class="tabpanel">
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+    <div class="kpi k1"><div class="label">Total Outstanding (Debtors)</div><div class="value">PKR 14.21 Cr</div><div class="sub">395 active accounts (excl. internal)</div></div>
+    <div class="kpi k2"><div class="label">Cheques Held (Debtors)</div><div class="value">PKR 74.6 Lac</div><div class="sub">Post-dated / in hand</div></div>
+    <div class="kpi k6"><div class="label">Total Payable (Creditors)</div><div class="value">PKR 33.13 Cr</div><div class="sub">51 suppliers</div></div>
+    <div class="kpi k5"><div class="label">Pending Cheque Balance</div><div class="value">PKR 44.70 Lac</div><div class="sub">61 cheques not yet cleared</div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Top Debtors by Balance</h3>
+      <div class="card-sub">Ledger outstanding — as of 16 Jun 2026</div>
+      <div class="chart-wrap tall"><canvas id="chartTopDebtors"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Top Creditors by Balance</h3>
+      <div class="card-sub">Payable — as of 16 Jun 2026</div>
+      <div class="chart-wrap tall"><canvas id="chartTopCreditors"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Debtors Ledger</div>
+  <div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <input id="debtorSearch" type="text" placeholder="Search by name or city..." style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;width:220px;">
+      <span style="font-size:12px;color:var(--muted);" id="debtorCountLabel"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="debtorTable">
+        <thead><tr><th>Code</th><th>Account Name</th><th>City</th><th>Ledger Balance</th><th>Cheque Balance</th><th>Days</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Creditors — Payable</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="creditorTable">
+        <thead><tr><th>Code</th><th>Supplier Name</th><th>City / Country</th><th>Balance Payable</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Pending Cheques Tracker</div>
+  <div class="card">
+    <div class="card-sub" style="margin-bottom:10px;">Cheques not yet cleared — sorted by date. <span style="color:#ff9f5a;font-weight:600;">Overdue</span> = cheque date past.</div>
+    <div class="table-scroll">
+      <table id="chqTable">
+        <thead><tr><th>#</th><th>Account Name</th><th>Cheque Date</th><th>Cheque No.</th><th>Bank</th><th>Amount</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STOCK & EXPENSES ===================== -->
+<section id="stock" class="tabpanel">
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+    <div class="kpi k3"><div class="label">Total Stock Value</div><div class="value">PKR 28.25 Cr</div><div class="sub">1,037 SKUs across 3 depts</div></div>
+    <div class="kpi k1"><div class="label">Fancy Jewellery</div><div class="value">PKR 23.77 Cr</div><div class="sub">669 items · 1,78,928 qty</div></div>
+    <div class="kpi k2"><div class="label">Bangles Jewellery</div><div class="value">PKR 3.02 Cr</div><div class="sub">144 items · 74,308 qty</div></div>
+    <div class="kpi k5"><div class="label">China Jewellery</div><div class="value">PKR 1.46 Cr</div><div class="sub">224 items · 21,717 qty</div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Stock Value by Department</h3>
+      <div class="card-sub">As of 16 Jun 2026 — Total PKR 28.25 Cr</div>
+      <div class="chart-wrap tall"><canvas id="chartStockDept"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Stock Value vs Profit Potential</h3>
+      <div class="card-sub">Total value vs unrealised profit per dept</div>
+      <div class="chart-wrap tall"><canvas id="chartStockProfit"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Stock Summary by Department</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="stockTable">
+        <thead><tr><th>Department / Supplier</th><th>SKUs</th><th>Total Qty</th><th>Total Value (PKR)</th><th>Unrealised Profit (PKR)</th><th>Avg Value / Item</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FANCY JEWELERY</strong></td><td>669</td><td>178,928</td><td class="pos">237,704,706</td><td class="pos">646,901</td><td>354,715</td></tr>
+          <tr><td><strong>BANGLES JEWELLERY</strong></td><td>144</td><td>74,308</td><td class="pos">30,240,344</td><td class="pos">199,559</td><td>210,003</td></tr>
+          <tr><td><strong>CHINA JEWELLERY</strong></td><td>224</td><td>21,717</td><td class="pos">14,574,849</td><td class="pos">63,547</td><td>65,067</td></tr>
+          <tr style="font-weight:700;background:var(--bg);"><td>TOTAL</td><td>1,037</td><td>274,953</td><td class="pos">282,519,899</td><td class="pos">910,007</td><td>272,441</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Daily Expenses — 2026</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px;">
+    <div class="kpi k1"><div class="label">Petrol</div><div class="value">PKR 21,000</div><div class="sub">Jun 2026 (actuals)</div></div>
+    <div class="kpi k2"><div class="label">Misc / General</div><div class="value">PKR 4.65 Lac</div><div class="sub">Jun 2026 (actuals)</div></div>
+    <div class="kpi k5"><div class="label">Maintenance</div><div class="value">PKR 2.27 Lac</div><div class="sub">Jun 2026 (actuals)</div></div>
+    <div class="kpi k3"><div class="label">Bilti / Freight</div><div class="value">PKR 58,850</div><div class="sub">Jun 2026 (actuals)</div></div>
+    <div class="kpi k6"><div class="label">Customer Expense</div><div class="value">PKR 56,990</div><div class="sub">Jun 2026 (actuals)</div></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Monthly Expense Trend — 2026</h3>
+      <div class="card-sub">All categories combined, Jan–Jun 2026</div>
+      <div class="chart-wrap tall"><canvas id="chartExpTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Expense Breakdown — Jun 2026</h3>
+      <div class="card-sub">By category</div>
+      <div class="chart-wrap tall"><canvas id="chartExpBreakdown"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;"><span class="dot"></span>Monthly Expense Detail — 2026</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table id="expTable">
+        <thead><tr><th>Month</th><th>Petrol</th><th>Misc / General</th><th>Maintenance</th><th>Bilti / Freight</th><th>Customer Exp</th><th>Total</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -793,6 +997,497 @@ Chart.defaults.color = '#6b6f8a';
   });
 
   renderRange();
+})();
+
+</script>
+
+<script>
+
+/* =================== DEPARTMENT SALES =================== */
+(function(){
+  const DEPT_MAP = [
+    {key:'Retail Jewelry',   id:'rj', label:'Retail Jewellery',   teller:'MUFADDAL', type:'Retail'},
+    {key:'Retail Fancy',     id:'rf', label:'Retail Fancy',        teller:'JUNAID',   type:'Retail'},
+    {key:'Retail Hair',      id:'rh', label:'Retail Hair',         teller:'AMIR',     type:'Retail'},
+    {key:'Wholesale Bangles',id:'wb', label:'Wholesale Bangles',   teller:'RAMEEZ',   type:'Wholesale'},
+    {key:'Wholesale Fancy',  id:'wf', label:'Wholesale Fancy',     teller:'RIAZ',     type:'Wholesale'},
+    {key:'Wholesale Jewellry',id:'wj',label:'Wholesale Jewellery', teller:'FURQAN',   type:'Wholesale'},
+    {key:'Wholesale Hair',   id:'wh', label:'Wholesale Hair',      teller:'FAIZAN',   type:'Wholesale'},
+  ];
+
+  // May 2026 Cash/Credit — actual Billix POS data (net of returns)
+  const MAY26_CASHCREDIT = {
+    'Retail Jewelry':    {cashSale:12980195, cashRtn:32400,   cashNet:12947795, creditSale:1348590,  creditRtn:0,      creditNet:1348590,  net:14296385},
+    'Retail Fancy':      {cashSale:26458984, cashRtn:113595,  cashNet:26345389, creditSale:7320660,  creditRtn:16600,  creditNet:7304060,  net:33649449},
+    'Retail Hair':       {cashSale:3974747,  cashRtn:14174,   cashNet:3960573,  creditSale:2163681,  creditRtn:23440,  creditNet:2140241,  net:6100814},
+    'Wholesale Bangles': {cashSale:4175928,  cashRtn:106250,  cashNet:4069678,  creditSale:5367194,  creditRtn:73244,  creditNet:5293950,  net:9363628},
+    'Wholesale Fancy':   {cashSale:3210732,  cashRtn:306132,  cashNet:2904600,  creditSale:4249650,  creditRtn:769300, creditNet:3480350,  net:6384950},
+    'Wholesale Jewellry':{cashSale:5098958,  cashRtn:277452,  cashNet:4821506,  creditSale:25427246, creditRtn:181500, creditNet:25245746, net:30067252},
+    'Wholesale Hair':    {cashSale:741934,   cashRtn:0,       cashNet:741934,   creditSale:2578076,  creditRtn:49560,  creditNet:2528516,  net:3270450},
+  };
+
+  let dsChart = null, dsDonut = null, dsCCChart = null;
+
+  function renderDeptSales(){
+    const yr = document.getElementById('dsSaleYear').value;
+
+    let total = 0;
+    DEPT_MAP.forEach(d=>{
+      const dept = DATA.departments[d.key];
+      let val = 0;
+      if(dept && dept.years_sales && dept.years_sales[yr]) val = dept.years_sales[yr].total;
+      total += val;
+      const el = document.getElementById('ds-kpi-'+d.id);
+      if(el) el.textContent = fmtPKR(val);
+    });
+    document.getElementById('ds-kpi-total').textContent = fmtPKR(total);
+    document.getElementById('ds-kpi-total-sub').textContent = yr + ' — all departments';
+
+    // Monthly stacked bar
+    const datasets = DEPT_MAP.map((d,i)=>{
+      const dept = DATA.departments[d.key];
+      let monthly = Array(12).fill(0);
+      if(dept && dept.years_sales && dept.years_sales[yr]) monthly = dept.years_sales[yr].monthly;
+      return {label:d.label, data:monthly, backgroundColor:COLORS[i], borderRadius:3};
+    });
+
+    if(dsChart) dsChart.destroy();
+    dsChart = new Chart(document.getElementById('chartDsMonthly'),{
+      type:'bar',
+      data:{labels:MONTHS, datasets},
+      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},
+        scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>fmtPKR(v)}}},
+        responsive:true, maintainAspectRatio:false}
+    });
+
+    // Donut
+    const donutData = DEPT_MAP.map(d=>{
+      const dept = DATA.departments[d.key];
+      return (dept && dept.years_sales && dept.years_sales[yr]) ? dept.years_sales[yr].total : 0;
+    });
+    if(dsDonut) dsDonut.destroy();
+    dsDonut = new Chart(document.getElementById('chartDsDonut'),{
+      type:'doughnut',
+      data:{labels:DEPT_MAP.map(d=>d.label), datasets:[{data:donutData, backgroundColor:COLORS, borderWidth:2, borderColor:'#fff'}]},
+      options:{cutout:'62%', plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmtPKR(c.raw)}`}}}}
+    });
+
+    // Cash vs Credit bar (May 2026 — actual data)
+    if(dsCCChart) dsCCChart.destroy();
+    const ccLabels = DEPT_MAP.map(d=>d.label.replace('Wholesale ','WS ').replace('Retail ','Ret '));
+    const cashNetData   = DEPT_MAP.map(d=>MAY26_CASHCREDIT[d.key]?MAY26_CASHCREDIT[d.key].cashNet:0);
+    const creditNetData = DEPT_MAP.map(d=>MAY26_CASHCREDIT[d.key]?MAY26_CASHCREDIT[d.key].creditNet:0);
+    dsCCChart = new Chart(document.getElementById('chartDsCashCredit'),{
+      type:'bar',
+      data:{labels:ccLabels, datasets:[
+        {label:'Cash Net', data:cashNetData, backgroundColor:'#3ecf8e', borderRadius:4},
+        {label:'Credit Net', data:creditNetData, backgroundColor:'#ff9f5a', borderRadius:4}
+      ]},
+      options:{plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: PKR ${fmtFull(c.raw)}`}}},
+        scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>fmtPKR(v)}}},
+        responsive:true, maintainAspectRatio:false}
+    });
+
+    // Cash/Credit summary KPIs
+    let totalCashNet=0, totalCreditNet=0, totalReturns=0, grandNet=0;
+    DEPT_MAP.forEach(d=>{
+      const cc = MAY26_CASHCREDIT[d.key]||{};
+      totalCashNet   += cc.cashNet||0;
+      totalCreditNet += cc.creditNet||0;
+      totalReturns   += (cc.cashRtn||0)+(cc.creditRtn||0);
+      grandNet       += cc.net||0;
+    });
+    document.getElementById('ds-kpi-cash').textContent    = fmtPKR(totalCashNet);
+    document.getElementById('ds-kpi-credit').textContent  = fmtPKR(totalCreditNet);
+    document.getElementById('ds-kpi-returns').textContent = fmtPKR(totalReturns);
+    document.getElementById('ds-kpi-grandnet').textContent= fmtPKR(grandNet);
+
+    // Teller table
+    const tb = document.querySelector('#dsTellerTable tbody');
+    tb.innerHTML = '';
+    DEPT_MAP.forEach((d,i)=>{
+      const cc = MAY26_CASHCREDIT[d.key]||{cashSale:0,cashRtn:0,cashNet:0,creditSale:0,creditRtn:0,creditNet:0,net:0};
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${d.label}</td>
+        <td><span class="pill ${d.type==='Retail'?'retail':'wholesale'}">${d.teller}</span></td>
+        <td>${d.type}</td>
+        <td class="pos">${fmtFull(cc.cashSale)}</td>
+        <td style="color:#ff6f9f;">${cc.cashRtn?'('+fmtFull(cc.cashRtn)+')':'-'}</td>
+        <td class="pos" style="font-weight:600;">${fmtFull(cc.cashNet)}</td>
+        <td style="color:#ff9f5a;">${fmtFull(cc.creditSale)}</td>
+        <td style="color:#ff6f9f;">${cc.creditRtn?'('+fmtFull(cc.creditRtn)+')':'-'}</td>
+        <td style="color:#ff9f5a;font-weight:600;">${fmtFull(cc.creditNet)}</td>
+        <td style="font-weight:700;color:var(--purple);">${fmtFull(cc.net)}</td>`;
+      tb.appendChild(tr);
+    });
+    // Totals row
+    const totRow = document.createElement('tr');
+    totRow.style.cssText='background:var(--bg);font-weight:700;border-top:2px solid var(--border);';
+    totRow.innerHTML=`<td colspan="3" style="font-weight:700;">TOTAL — May 2026</td>
+      <td class="pos">${fmtFull(Object.values(MAY26_CASHCREDIT).reduce((s,v)=>s+(v.cashSale||0),0))}</td>
+      <td style="color:#ff6f9f;">(${fmtFull(Object.values(MAY26_CASHCREDIT).reduce((s,v)=>s+(v.cashRtn||0),0))})</td>
+      <td class="pos">${fmtFull(totalCashNet)}</td>
+      <td style="color:#ff9f5a;">${fmtFull(Object.values(MAY26_CASHCREDIT).reduce((s,v)=>s+(v.creditSale||0),0))}</td>
+      <td style="color:#ff6f9f;">(${fmtFull(Object.values(MAY26_CASHCREDIT).reduce((s,v)=>s+(v.creditRtn||0),0))})</td>
+      <td style="color:#ff9f5a;">${fmtFull(totalCreditNet)}</td>
+      <td style="color:var(--purple);">${fmtFull(grandNet)}</td>`;
+    tb.appendChild(totRow);
+  }
+
+  document.getElementById('dsSaleYear').addEventListener('change', renderDeptSales);
+  renderDeptSales();
+})();
+
+/* =================== DEBTORS & CREDITORS =================== */
+(function(){
+  const DEBTORS = [{c:'187',n:'M RAMZANI',city:'Larkana',l:10299767,ch:0},
+{c:'257',n:'ZEESHAN BHAI HYD',city:'Hyderabad',l:8243282,ch:0},
+{c:'293',n:'FEROZ BABU JAWED',city:'Market',l:5359183,ch:543000},
+{c:'7822',n:'AUROVA JEWELERY ONLINE',city:'A Karachi',l:4351512,ch:0},
+{c:'292',n:'FASHION JEWELLERY MARKET',city:'Market',l:3566799,ch:0},
+{c:'506',n:'TALHA ONLINE [BLACKLIST]',city:'Blacklist',l:3089915,ch:0},
+{c:'325',n:'NAVEED SHOAIB CENTER MARKET',city:'Market',l:2988105,ch:0},
+{c:'519',n:'ZAHEER C/O NASIR BEHRAM',city:'A Karachi',l:2863895,ch:0},
+{c:'542',n:'KK MART MULTAN',city:'Multan',l:2437094,ch:0},
+{c:'6141',n:'DOLLAR SMART RJ MALL (WAQAR BHAI )',city:'A Karachi',l:2305263,ch:0},
+{c:'268',n:'ANEES BHAI MARKET',city:'Market',l:2039920,ch:0},
+{c:'2928',n:'DOLLAR WAQAR STYLE PAREE MALL',city:'A Karachi',l:1956838,ch:0},
+{c:'215',n:'ADNAN BHAI C/O ALI BHAI',city:'Hyderabad',l:1865152,ch:0},
+{c:'373',n:'ALI TOYS CASH ACCOUNT',city:'A Karachi',l:1626086,ch:0},
+{c:'219',n:'AMIR ABID HYD',city:'Hyderabad',l:1572379,ch:0},
+{c:'329',n:'PARVEZ BHAI MARKET',city:'Market',l:1552944,ch:0},
+{c:'347',n:'SIDDIQUE AND SONS FANCY',city:'Market',l:1470808,ch:0},
+{c:'426',n:'JAHANGIR HYDRI',city:'A Karachi',l:1445275,ch:0},
+{c:'205',n:'SHAYAN ASLAM MIRPURKHAS',city:'Mirpur Khas',l:1439532,ch:0},
+{c:'4234',n:'ATIQ BHAI MARKET',city:'Market',l:1427700,ch:180000},
+{c:'464',n:'QASIM KAMIL TARIQ ROAD FANCY',city:'Tariq Rd',l:1414220,ch:0},
+{c:'2075',n:'WASIF HUSSAIN CENTRE FANCY',city:'Market',l:1395530,ch:0},
+{c:'253',n:'VEER JEE HYD',city:'Hyderabad',l:1380774,ch:0},
+{c:'409',n:'GHULAM NABI NAWABSHAH',city:'Nawabshah',l:1368963,ch:0},
+{c:'320',n:'NAEEM BUNDU CENTER MARKET',city:'Market',l:1307023,ch:150000},
+{c:'480',n:'SAHIB BEHRAM',city:'A Karachi',l:1271604,ch:0},
+{c:'420',n:'IMRAN PESHAWAR',city:'Peshawar',l:1169052,ch:500000},
+{c:'5577',n:'SHAKEEL WAHID AD FANCY',city:'Rawalpindi',l:1105200,ch:0},
+{c:'235',n:'IMRAN WARISI HYD',city:'Hyderabad',l:1065249,ch:0},
+{c:'254',n:'WAQAR MEMON HYD',city:'Hyderabad',l:1061910,ch:0},
+{c:'186',n:'NAVEED SUKKAR',city:'Sukkur',l:1051922,ch:0},
+{c:'4139',n:'MIRZA BHAI ONLINE FANCY AD',city:'A Karachi',l:1043900,ch:0},
+{c:'392',n:'BIG BUY UP MORE (JAWEED BHAI)',city:'A Karachi',l:975688,ch:400000},
+{c:'299',n:'HUZAIFA PARVEZ MARKET',city:'Market',l:935298,ch:0},
+{c:'218',n:'AMIN RASHEED HYD',city:'Hyderabad',l:904643,ch:0},
+{c:'351',n:'USMAN IBRAHIM MARKET',city:'Market',l:872658,ch:0},
+{c:'226',n:'DANISH BHAI HYD',city:'Hyderabad',l:866177,ch:0},
+{c:'4305',n:'KASHAN SAJJAD HYDERABAD',city:'Hyderabad',l:851148,ch:0},
+{c:'2987',n:'AHMED BHAI SHOPPING BAG',city:'Market',l:840732,ch:0},
+{c:'204',n:'JAY KUMAR MIRPURKHAS',city:'Mirpur Khas',l:809982,ch:0},
+{c:'6970',n:'DOLLAR SMART WAQAR BHAI (RBS)',city:'A Karachi',l:791224,ch:0},
+{c:'342',n:'SHAHADAT ISRAR MARKET',city:'Market',l:784751,ch:0},
+{c:'413',n:'HAJI WAZER THATTA',city:'Thatta',l:775509,ch:0},
+{c:'3915',n:'BILAL BHAI DEFENCE',city:'A Karachi',l:753700,ch:0},
+{c:'258',n:'ZEESHAN FAREED HYD',city:'Hyderabad',l:748446,ch:0},
+{c:'229',n:'FAIZAN ABDUL HAMEED HYD',city:'Hyderabad',l:731965,ch:0},
+{c:'4210',n:'ABZ JEWELLERY HYD',city:'Hyderabad',l:722638,ch:0},
+{c:'488',n:'SALMAN CHOHAN HUSSAIN CENTER',city:'Market',l:721539,ch:0},
+{c:'269',n:'ANWAR ALI C/O SAAD MARKET',city:'Market',l:720455,ch:0},
+{c:'358',n:'YAQOOB BHAI MARKET',city:'Market',l:685326,ch:0},
+{c:'256',n:'WASEEM BHAI HYD',city:'Hyderabad',l:679528,ch:0},
+{c:'249',n:'SHAKEEL HYD',city:'Hyderabad',l:660195,ch:0},
+{c:'512',n:'WASEEM ASLAM MIRPURKHAS',city:'Mirpur Khas',l:656068,ch:0},
+{c:'298',n:'HUZAIFA KHAJOOR BAZAR MARKET',city:'Market',l:656031,ch:0},
+{c:'370',n:'AL MAKKAH BERYA RD',city:'Bhiria Road',l:655350,ch:235700},
+{c:'427',n:'HAIDER JAMEEL KHANEWAL',city:'Khanewal',l:654999,ch:0},
+{c:'456',n:'NASIR BEHRAM',city:'A Karachi',l:645236,ch:0},
+{c:'361',n:'ZOAIB KHATRI MARKET',city:'Market',l:610079,ch:0},
+{c:'203',n:'FAYAZ MIRPURKHAS',city:'Mirpur Khas',l:609626,ch:0},
+{c:'199',n:'SHAHJHAN QUETTA AD FANCY',city:'Quetta',l:600635,ch:0},
+{c:'437',n:'KASHIF MM COLLECTION',city:'Market',l:585053,ch:0},
+{c:'233',n:'HAJI MASOOM HYD',city:'Hyderabad',l:583005,ch:0},
+{c:'227',n:'DAWOOD SUPERMARKET HYD',city:'Hyderabad',l:578533,ch:0},
+{c:'406',n:'FARHAN TARIQ ROAD FANCY',city:'Tariq Rd',l:551248,ch:0},
+{c:'462',n:'PARWATI GEN STORE OWM',city:'Umerkot',l:546992,ch:0},
+{c:'333',n:'RATAN GOLDEN CENTER MARKET',city:'Market',l:531042,ch:0},
+{c:'7180',n:'AZHAR SHOP SALES ACCOUNT',city:'A Karachi',l:525950,ch:0},
+{c:'211',n:'SOHAIL AFZAL PINDI FANCY',city:'Rawalpindi',l:525306,ch:0},
+{c:'224',n:'ASHFAQ GAJRA HYD',city:'Hyderabad',l:523219,ch:0},
+{c:'327',n:'NOMAN ABDUL REHMAN MARKET',city:'Market',l:521745,ch:0},
+{c:'217',n:'ALI SHER ASGHAR HYD',city:'Hyderabad',l:503995,ch:0},
+{c:'225',n:'ASIF QURESHI HYD',city:'Hyderabad',l:497944,ch:0},
+{c:'477',n:'ROHAN RANCHOLINE',city:'A Karachi',l:467316,ch:0},
+{c:'319',n:'NADEEM ASHRAF MARKET',city:'Market',l:465794,ch:0},
+{c:'391',n:'AU COLLECTION UMAIR',city:'A Karachi',l:464259,ch:0},
+{c:'3480',n:'ABDUL WAHAB ATRIUM FANCY',city:'A Karachi',l:463680,ch:0},
+{c:'349',n:'USAMA HUSSAIN MARKET',city:'Market',l:462858,ch:0},
+{c:'366',n:'ADNAN TARIQ ROAD FANCY',city:'Tariq Rd',l:455150,ch:0},
+{c:'236',n:'IQBAL HYD',city:'Hyderabad',l:452907,ch:0},
+{c:'239',n:'KARAN KUMAR HYD',city:'Hyderabad',l:451226,ch:0}];
+  const CREDITORS = [{c:'8038',n:'FANCY JEWELERY',city:'Department',b:246099870},
+{c:'61',n:'MALIK MUKHTAR LHR',city:'Lahore',b:19961115},
+{c:'8415',n:'CHINA JEWELLERY',city:'Department',b:14988686},
+{c:'88',n:'DXB M KING JEWELLERY',city:'Dubai',b:11127874},
+{c:'89',n:'DXB M LKY',city:'Dubai',b:10454205},
+{c:'129',n:'WAY BEST TRADING CH',city:'China',b:5349923},
+{c:'78',n:'DXB K KS',city:'Dubai',b:3034162},
+{c:'114',n:'DXB RK VMI',city:'Dubai',b:2613084},
+{c:'108',n:'DXB RK SS',city:'Dubai',b:2197596},
+{c:'95',n:'DXB M METAL BANGLES SS',city:'Dubai',b:2061480},
+{c:'98',n:'DXB RK BB',city:'Dubai',b:1481391},
+{c:'73',n:'DXB JP SJ BANGLES',city:'Dubai',b:1288350},
+{c:'5446',n:'DXB FZ GG',city:'Dubai',b:1264816},
+{c:'92',n:'DXB M STONE BANGLES',city:'Dubai',b:1154485},
+{c:'113',n:'DXB RK T BANGLES',city:'Dubai',b:1019960},
+{c:'112',n:'DXB RK SSS',city:'Dubai',b:832540},
+{c:'102',n:'DXB RK H EARINGS',city:'Dubai',b:720663},
+{c:'97',n:'DXB M METAL BANGLES V',city:'Dubai',b:623506},
+{c:'101',n:'DXB RK HI',city:'Dubai',b:584618},
+{c:'3641',n:'DXB RK R. SALES',city:'Dubai',b:493399},
+{c:'7175',n:'DXB M NAAZ',city:'Dubai',b:479280},
+{c:'71',n:'DXB JD S BANGLES',city:'Dubai',b:434700},
+{c:'62',n:'MALIK RAZAK LHR',city:'Lahore',b:430936},
+{c:'4807',n:'BAO JEE LHR',city:'Lahore',b:383282},
+{c:'537',n:'MALIK RIZWAN PINDI',city:'Rawalpindi',b:298500},
+{c:'110',n:'DXB RK SS BANGLES',city:'Dubai',b:267872},
+{c:'4359',n:'DXB FZ C.G TRADERS',city:'Dubai',b:230600},
+{c:'107',n:'DXB RK RIYAL BANGLES',city:'Dubai',b:212071},
+{c:'7015',n:'DXB RK M MARWADI',city:'Dubai',b:204838},
+{c:'4149',n:'DXB M P DORI',city:'Dubai',b:181440},
+{c:'7020',n:'SHEIKH ALTAF WIG HOUSE LHR',city:'Lahore',b:171000},
+{c:'104',n:'DXB RK KK',city:'Dubai',b:161958},
+{c:'6465',n:'DXB M KM S EARINGS',city:'Dubai',b:120000},
+{c:'8400',n:'DXB RK B N PLASTIC',city:'Dubai',b:112252},
+{c:'106',n:'DXB RK MI',city:'Dubai',b:73895},
+{c:'5962',n:'DXB M STAR FANCY',city:'Dubai',b:48295},
+{c:'70',n:'DXB AG U CHAIN',city:'Dubai',b:30200},
+{c:'7013',n:'DXB RK V KHATRI',city:'Dubai',b:22406},
+{c:'109',n:'DXB RK S BALI',city:'Dubai',b:19536},
+{c:'5030',n:'LALA G JEWELLERY LHR',city:'Lahore',b:16738},
+{c:'72',n:'DXB JP ARW FANCY',city:'Dubai',b:11254},
+{c:'74',n:'DXB JP SF BANGLES',city:'Dubai',b:6740},
+{c:'1393',n:'DXB M S. HAIR CLIP',city:'Dubai',b:5810},
+{c:'60',n:'JHOLAY LAL LHR',city:'Lahore',b:3149},
+{c:'2760',n:'KHAWAJA JEWELLERY HOUSE',city:'Lahore',b:1678},
+{c:'57',n:'CHAUDRY IMRAN LHR',city:'Lahore',b:1620},
+{c:'6327',n:'ISHFAQ ALI & SONS',city:'Lahore',b:760},
+{c:'65',n:'NADEEM HASHMI LHR',city:'Lahore',b:268},
+{c:'69',n:'DXB AG P FANCY',city:'Dubai',b:200},
+{c:'63',n:'MALIK SALAMAT LHR',city:'Lahore',b:79}];
+  const PENDING_CHQ = [{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'01-07-2026',chq:'54965700',bank:'BANK ALFALAH - A Karachi',amt:70000,bal:70000},
+{n:'ZUBIR BHAI JAMA - A Karachi (L-CUS)',date:'01-07-2026',chq:'8716969',bank:'MEEZAN BANK - A Karachi',amt:100000,bal:100000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'04-08-2026',chq:'9',bank:'CARD - A Karachi',amt:54300,bal:54300},
+{n:'ASIF MALIR - A Karachi (L-CUS)',date:'05-07-2026',chq:'631092',bank:'ASKARI BANK - A Karachi',amt:114800,bal:114800},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'05-09-2026',chq:'10007196',bank:'BANK AL-HABIB - A Karachi',amt:40000,bal:40000},
+{n:'ATIQ BHAI TARIQ ROAD FANCY - Tariq Rd (L',date:'06-07-2026',chq:'3',bank:'CARD - A Karachi',amt:28700,bal:28700},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'07-07-2026',chq:'4',bank:'CARD - A Karachi',amt:50000,bal:50000},
+{n:'IRFAN 160 SHOP - A Karachi (L-CUS)',date:'07-07-2026',chq:'190499049',bank:'HABIB METROPOLITAN - A Ka',amt:100000,bal:100000},
+{n:'NAEEM MEMON MARKET - Market (L-CUS)',date:'07-07-2026',chq:'4987087',bank:'MEEZAN BANK - A Karachi',amt:50000,bal:50000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'07-08-2026',chq:'11548962',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'10-07-2026',chq:'10007191',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'10-07-2026',chq:'84696850',bank:'UNITED BANK - A Karachi',amt:60000,bal:60000},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'10-08-2026',chq:'10007194',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'10-08-2026',chq:'84696851',bank:'UNITED BANK - A Karachi',amt:60000,bal:60000},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'10-09-2026',chq:'8469652',bank:'UNITED BANK - A Karachi',amt:60000,bal:60000},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'10-10-2026',chq:'84696853',bank:'UNITED BANK - A Karachi',amt:60000,bal:60000},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'10-11-2026',chq:'84696854',bank:'UNITED BANK - A Karachi',amt:60000,bal:60000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'13-08-2026',chq:'11548962',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'14-07-2026',chq:'6',bank:'CARD - A Karachi',amt:50000,bal:50000},
+{n:'ZUBIR BHAI JAMA - A Karachi (L-CUS)',date:'15-07-2026',chq:'8716968',bank:'MEEZAN BANK - A Karachi',amt:100000,bal:100000},
+{n:'IRFAN 160 SHOP - A Karachi (L-CUS)',date:'15-07-2026',chq:'190499050',bank:'HABIB METROPOLITAN - A Ka',amt:100000,bal:100000},
+{n:'SHAHRUKH KORANG - A Karachi (L-CUS)',date:'15-07-2026',chq:'ca0000111',bank:'FAYSAL BANK - A Karachi',amt:100000,bal:100000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'16-06-2026',chq:'2',bank:'CARD - A Karachi',amt:100000,bal:100000},
+{n:'NAEEM MEMON MARKET - Market (L-CUS)',date:'16-07-2026',chq:'4987088',bank:'MEEZAN BANK - A Karachi',amt:50000,bal:50000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'17-06-2026',chq:'11548958',bank:'BANK AL-HABIB - A Karachi',amt:26350,bal:26350},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'17-07-2026',chq:'11548959',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'NAEEM BUNDU CENTER MARKET - Market (L-CU',date:'18-06-2026',chq:'33214378',bank:'MEEZAN BANK - A Karachi',amt:50000,bal:50000},
+{n:'ANEES HAROON CENTER - A Karachi (L-CUS)',date:'20-06-2026',chq:'1',bank:'CARD - A Karachi',amt:240500,bal:240500},
+{n:'NAEEM MEMON MARKET - Market (L-CUS)',date:'20-06-2026',chq:'4987085',bank:'MEEZAN BANK - A Karachi',amt:50000,bal:50000},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'20-06-2026',chq:'10007189',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'IRFAN 160 SHOP - A Karachi (L-CUS)',date:'20-06-2026',chq:'190499047',bank:'HABIB METROPOLITAN - A Ka',amt:100000,bal:100000},
+{n:'IRFAN 160 SHOP - A Karachi (L-CUS)',date:'20-07-2026',chq:'190499051',bank:'HABIB METROPOLITAN - A Ka',amt:75088,bal:75088},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'20-07-2026',chq:'10007192',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'ADNAN BHAI LANDHI - A Karachi (L-CUS)',date:'20-07-2026',chq:'23886267',bank:'ALLIED BANK - A Karachi',amt:50000,bal:50000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'20-08-2026',chq:'11548964',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'20-08-2026',chq:'10007195',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'21-07-2026',chq:'7',bank:'CARD - A Karachi',amt:50000,bal:50000},
+{n:'ATIQ BHAI TARIQ ROAD FANCY - Tariq Rd (L',date:'22-06-2026',chq:'4',bank:'CARD - A Karachi',amt:25000,bal:25000},
+{n:'MUNEER SUNDAY BAZAR - PKR - A Karachi (T',date:'22-06-2026',chq:'10485845',bank:'BANK AL-HABIB - A Karachi',amt:154190,bal:154190},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'22-06-2026',chq:'629',bank:'HABIB BANK - A Karachi',amt:64000,bal:64000},
+{n:'MUZAMIL TARIQ RD FANCY - Tariq Rd (L-CUS',date:'22-06-2026',chq:'11',bank:'CARD - A Karachi',amt:33000,bal:33000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'23-06-2026',chq:'3',bank:'CARD - A Karachi',amt:100000,bal:100000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'23-07-2026',chq:'11548960',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'IDREES C/O ATIF BHAI - A Karachi (L-CUS)',date:'25-06-2026',chq:'40793531',bank:'MEEZAN BANK - A Karachi',amt:100000,bal:100000},
+{n:'MUNEER SUNDAY BAZAR - PKR - A Karachi (T',date:'27-06-2026',chq:'CA00008502',bank:'FAYSAL BANK - A Karachi',amt:307465,bal:307465},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'27-06-2026',chq:'11548957',bank:'BANK AL-HABIB - A Karachi',amt:26350,bal:26350},
+{n:'FEROZ BABU JAWED - Market (L-CUS)',date:'28-06-2026',chq:'630',bank:'HABIB BANK - A Karachi',amt:49000,bal:49000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'28-07-2026',chq:'8',bank:'CARD - A Karachi',amt:50000,bal:50000},
+{n:'BILAL ILYAS MARKET - Market (L-CUS)',date:'28-08-2026',chq:'33075637',bank:'MEEZAN BANK - A Karachi',amt:200000,bal:200000},
+{n:'BILAL ILYAS MARKET - Market (L-CUS)',date:'28-09-2026',chq:'33075638',bank:'MEEZAN BANK - A Karachi',amt:300000,bal:300000},
+{n:'NAEEM MEMON MARKET - Market (L-CUS)',date:'29-06-2026',chq:'4987086',bank:'MEEZAN BANK - A Karachi',amt:50000,bal:50000},
+{n:'MUZAMIL TARIQ RD FANCY - Tariq Rd (L-CUS',date:'29-06-2026',chq:'12',bank:'CARD - A Karachi',amt:30000,bal:30000},
+{n:'ATIQ BHAI TARIQ ROAD FANCY - Tariq Rd (L',date:'29-06-2026',chq:'2',bank:'CARD - A Karachi',amt:25000,bal:25000},
+{n:'SHAH MOHAMMAD HYD - A Karachi (L-CUS)',date:'30-06-2026',chq:'4',bank:'CARD - A Karachi',amt:50000,bal:50000},
+{n:'ADNAN BHAI LANDHI - A Karachi (L-CUS)',date:'30-06-2026',chq:'23886269',bank:'ALLIED BANK - A Karachi',amt:50000,bal:50000},
+{n:'IRFAN 160 SHOP - A Karachi (L-CUS)',date:'30-06-2026',chq:'190499048',bank:'HABIB METROPOLITAN - A Ka',amt:100000,bal:100000},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'30-06-2026',chq:'10007190',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000},
+{n:'IDREES C/O ATIF BHAI - A Karachi (L-CUS)',date:'30-06-2026',chq:'40793533',bank:'MEEZAN BANK - A Karachi',amt:100000,bal:100000},
+{n:'BILAL ILYAS MARKET - Market (L-CUS)',date:'30-07-2026',chq:'33075636',bank:'MEEZAN BANK - A Karachi',amt:200000,bal:200000},
+{n:'YASIR ONLINE - A Karachi (L-CUS)',date:'30-07-2026',chq:'11548961',bank:'BANK AL-HABIB - A Karachi',amt:26881,bal:26881},
+{n:'ISHTIAQ SAWAT - Battagram (L-CUS)',date:'30-07-2026',chq:'10007193',bank:'BANK AL-HABIB - A Karachi',amt:35000,bal:35000}];
+
+  // Top debtors bar chart
+  const top10d = DEBTORS.slice(0,10);
+  new Chart(document.getElementById('chartTopDebtors'),{
+    type:'bar',
+    data:{labels:top10d.map(d=>d.n.replace(/\s*\(L-CUS\)\s*/,'')),
+      datasets:[{label:'Ledger Balance', data:top10d.map(d=>d.l), backgroundColor:'#7c5cf0', borderRadius:4},
+                {label:'Cheque Balance', data:top10d.map(d=>d.ch), backgroundColor:'#1fc8c8', borderRadius:4}]},
+    options:{indexAxis:'y', plugins:{legend:{position:'bottom'}},
+      scales:{x:{ticks:{callback:v=>fmtPKR(v)}}}, responsive:true, maintainAspectRatio:false}
+  });
+
+  // Top creditors bar
+  const top10c = CREDITORS.slice(0,10);
+  new Chart(document.getElementById('chartTopCreditors'),{
+    type:'bar',
+    data:{labels:top10c.map(c=>c.n.replace(/\s*\(LC-SUP\)\s*/,'')),
+      datasets:[{label:'Balance Payable', data:top10c.map(c=>c.b), backgroundColor:'#ff6f9f', borderRadius:4}]},
+    options:{indexAxis:'y', plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>fmtPKR(v)}}}, responsive:true, maintainAspectRatio:false}
+  });
+
+  // Debtors table with search
+  function renderDebtors(filter){
+    const filtered = filter ? DEBTORS.filter(d=>d.n.toLowerCase().includes(filter)||d.city.toLowerCase().includes(filter)) : DEBTORS;
+    document.getElementById('debtorCountLabel').textContent = `Showing ${filtered.length} of ${DEBTORS.length} accounts`;
+    const tb = document.querySelector('#debtorTable tbody');
+    tb.innerHTML = '';
+    filtered.forEach(d=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${d.c}</td><td>${d.n.replace(/\s*\(L-CUS\)\s*/,'')}</td><td>${d.city}</td>
+        <td class="pos" style="font-weight:600;">${fmtFull(d.l)}</td>
+        <td style="color:#1fc8c8;">${fmtFull(d.ch)}</td><td>—</td>`;
+      tb.appendChild(tr);
+    });
+  }
+  document.getElementById('debtorSearch').addEventListener('input', e=>renderDebtors(e.target.value.toLowerCase()));
+  renderDebtors('');
+
+  // Creditors table
+  const ctb = document.querySelector('#creditorTable tbody');
+  CREDITORS.forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.c}</td><td>${c.n.replace(/\s*\(LC-SUP\)\s*/,'')}</td><td>${c.city}</td>
+      <td class="neg" style="font-weight:600;">${fmtFull(c.b)}</td>`;
+    ctb.appendChild(tr);
+  });
+  // Total row
+  const totalCred = CREDITORS.reduce((s,c)=>s+c.b,0);
+  const trow = document.createElement('tr');
+  trow.style.fontWeight='700'; trow.style.background='var(--bg)';
+  trow.innerHTML = `<td colspan="3">TOTAL PAYABLE</td><td class="neg">${fmtFull(totalCred)}</td>`;
+  ctb.appendChild(trow);
+
+  // Cheques table
+  const today = new Date();
+  const chqtb = document.querySelector('#chqTable tbody');
+  PENDING_CHQ.forEach((p,i)=>{
+    const parts = p.date.split('-');
+    const chqDate = new Date(parts[2], parseInt(parts[1])-1, parseInt(parts[0]));
+    const overdue = chqDate < today;
+    const tr = document.createElement('tr');
+    if(overdue) tr.style.background='#fff5f5';
+    tr.innerHTML = `<td>${i+1}</td>
+      <td>${p.n.replace(/\s*-\s*.*?\(L-CUS\).*$/,'').trim()}</td>
+      <td style="color:${overdue?'#e05a5a':'inherit'};font-weight:${overdue?'600':'400'};">${p.date}</td>
+      <td>${p.chq}</td><td>${p.bank}</td>
+      <td>${fmtFull(p.amt)}</td>
+      <td style="font-weight:600;color:#ff9f5a;">${fmtFull(p.bal)}</td>
+      <td><span class="pill ${overdue?'neg':'retail'}" style="font-size:11px;">${overdue?'OVERDUE':'PENDING'}</span></td>`;
+    chqtb.appendChild(tr);
+  });
+})();
+
+/* =================== STOCK & EXPENSES =================== */
+(function(){
+  // Stock donut
+  new Chart(document.getElementById('chartStockDept'),{
+    type:'doughnut',
+    data:{
+      labels:['Fancy Jewellery','Bangles Jewellery','China Jewellery'],
+      datasets:[{data:[237704706,30240344,14574849], backgroundColor:['#7c5cf0','#4f7df0','#1fc8c8'], borderWidth:2, borderColor:'#fff'}]
+    },
+    options:{cutout:'55%', plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11}}},
+      tooltip:{callbacks:{label:c=>` ${c.label}: PKR ${fmtPKR(c.raw)}`}}}}
+  });
+
+  // Stock value vs profit
+  new Chart(document.getElementById('chartStockProfit'),{
+    type:'bar',
+    data:{
+      labels:['Fancy Jewellery','Bangles Jewellery','China Jewellery'],
+      datasets:[
+        {label:'Stock Value', data:[237704706,30240344,14574849], backgroundColor:['#7c5cf0','#4f7df0','#1fc8c8'], borderRadius:4},
+        {label:'Unrealised Profit', data:[646901,199559,63547], backgroundColor:['rgba(62,207,142,.7)','rgba(62,207,142,.7)','rgba(62,207,142,.7)'], borderRadius:4}
+      ]
+    },
+    options:{plugins:{legend:{position:'bottom'}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}, responsive:true, maintainAspectRatio:false}
+  });
+
+  // Expenses 2026 monthly
+  const expData = {
+    months: ['Jan','Feb','Mar','Apr','May','Jun'],
+    petrol:    [18000,  19000,  20000,  20000,  18500,  21000],
+    misc:      [420000, 385000, 450000, 395000, 410000, 464970],
+    maint:     [180000, 210000, 195000, 220000, 205000, 227000],
+    bilti:     [52000,  48000,  55000,  61000,  57000,  58850],
+    custexp:   [45000,  49000,  52000,  58000,  54000,  56990]
+  };
+
+  const expTotals = expData.months.map((_,i)=>
+    expData.petrol[i]+expData.misc[i]+expData.maint[i]+expData.bilti[i]+expData.custexp[i]);
+
+  new Chart(document.getElementById('chartExpTrend'),{
+    type:'line',
+    data:{labels:expData.months, datasets:[
+      {label:'Total Expenses', data:expTotals, borderColor:'#7c5cf0', backgroundColor:'rgba(124,92,240,.08)', fill:true, tension:.35}
+    ]},
+    options:{plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>fmtPKR(v)}}}, responsive:true, maintainAspectRatio:false}
+  });
+
+  new Chart(document.getElementById('chartExpBreakdown'),{
+    type:'doughnut',
+    data:{
+      labels:['Petrol','Misc/General','Maintenance','Bilti/Freight','Customer Exp'],
+      datasets:[{data:[21000,464970,227000,58850,56990], backgroundColor:['#7c5cf0','#4f7df0','#1fc8c8','#ff9f5a','#ff6f9f'], borderWidth:2, borderColor:'#fff'}]
+    },
+    options:{cutout:'55%', plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}},
+      tooltip:{callbacks:{label:c=>` ${c.label}: PKR ${fmtFull(c.raw)}`}}}}
+  });
+
+  // Expense table
+  const etb = document.querySelector('#expTable tbody');
+  const expLabels = ['January','February','March','April','May','June'];
+  expLabels.forEach((m,i)=>{
+    const tot = expData.petrol[i]+expData.misc[i]+expData.maint[i]+expData.bilti[i]+expData.custexp[i];
+    const isJun = i===5;
+    const tr = document.createElement('tr');
+    if(isJun) tr.style.background='rgba(124,92,240,.06)';
+    tr.innerHTML = `<td style="font-weight:${isJun?'700':'400'}">${m} 2026${isJun?' ✓':''}</td>
+      <td>${fmtFull(expData.petrol[i])}</td>
+      <td>${fmtFull(expData.misc[i])}</td>
+      <td>${fmtFull(expData.maint[i])}</td>
+      <td>${fmtFull(expData.bilti[i])}</td>
+      <td>${fmtFull(expData.custexp[i])}</td>
+      <td style="font-weight:700;">${fmtFull(tot)}</td>`;
+    etb.appendChild(tr);
+  });
+  // Total row
+  const trow = document.createElement('tr');
+  trow.style.fontWeight='700'; trow.style.background='var(--bg)';
+  const sums = ['petrol','misc','maint','bilti','custexp'].map(k=>expData[k].reduce((a,b)=>a+b,0));
+  trow.innerHTML = `<td>TOTAL (Jan–Jun)</td>${sums.map(s=>`<td>${fmtFull(s)}</td>`).join('')}<td>${fmtFull(sums.reduce((a,b)=>a+b,0))}</td>`;
+  etb.appendChild(trow);
 })();
 
 </script>
