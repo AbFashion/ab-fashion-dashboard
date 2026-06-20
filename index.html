@@ -23,7 +23,7 @@ header .brand .logo{width:42px; height:42px; border-radius:12px; background:rgba
 header .brand .titles h1{font-size:18px; font-weight:700;}
 header .brand .titles span{font-size:12px; opacity:.85;}
 #userBadge{display:none; align-items:center; gap:8px;}
-nav.tabs{display:flex; flex-direction:column; position:fixed; top:0; left:0; width:200px; height:100vh; background:linear-gradient(180deg,var(--purple-d),var(--blue-d)); z-index:99; padding-top:80px; padding-bottom:10px; gap:0; overflow-y:auto;}
+nav.tabs{display:flex; flex-direction:column; position:fixed; top:0; left:0; width:200px; height:100vh; background:linear-gradient(180deg,var(--purple-d),var(--blue-d)); z-index:99; padding-top:10px; padding-bottom:10px; gap:0; overflow-y:auto;}
 nav.tabs button{background:transparent; border:none; border-left:3px solid transparent; color:rgba(255,255,255,.75); padding:12px 20px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; width:100%; text-align:left; border-radius:0; letter-spacing:.2px;}
 nav.tabs button:hover{background:rgba(255,255,255,.15); color:#fff;}
 nav.tabs button.active{background:rgba(255,255,255,.2); color:#fff; border-left-color:#fff;}
@@ -93,7 +93,7 @@ select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); back
 #lockscreen .lock-error{color:#e05a5a; font-size:12px; margin-top:10px; min-height:14px;}
 body.locked > *:not(#lockscreen){display:none !important;}
 /* ── User badge ── */
-#userBadge{position:fixed;top:12px;right:16px;display:flex;align-items:center;gap:8px;z-index:900;}
+#userBadge{display:flex;align-items:center;gap:8px;}
 #userBadge .uname{background:rgba(255,255,255,.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:13px;font-weight:600;}
 #logoutBtn{background:rgba(255,255,255,.2);color:#fff;border:none;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;}
 #logoutBtn:hover{background:rgba(255,255,255,.35);}
